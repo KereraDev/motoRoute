@@ -8,8 +8,8 @@ import Stories from '../../components/Home/Stories';
 import PostFeed from '../../components/Home/PostFeed';
 
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-
+  const colorScheme = useColorScheme(); 
+  
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       
