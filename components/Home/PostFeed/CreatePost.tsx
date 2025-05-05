@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { NewPostInput } from '../../types/Post';
+import { NewPostInput } from '../../../types/Post';
 
 type CreatePostProps = {
   onPostCreated: (post: NewPostInput) => void;

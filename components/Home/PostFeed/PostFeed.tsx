@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Pressable, useColorScheme } from 'react-native';
-import { Colors } from '../../constants/Colors';
-import { Post } from '../../types/Post'; // ✅ Asegúrate de que la ruta sea correcta
+import { Colors } from '../../../constants/Colors';
+import { Post } from '../../../types/Post';
+import ButtonLike from './buttonLike';
 
 type PostFeedProps = {
   posts: Post[];
+  onToggleLike: (id: string) => void;
+  onOpenComments: (postId: string) => void;
 };
 
-export default function PostFeed({ posts }: PostFeedProps) {
+export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
   const colorScheme = useColorScheme();
 
   return (
@@ -28,9 +31,11 @@ export default function PostFeed({ posts }: PostFeedProps) {
           <Image source={{ uri: post.image }} style={styles.postImage} />
 
           <View style={styles.postActions}>
-            <Pressable onPress={() => console.log('Me gusta')}>
-              <Text style={styles.icon}>❤️ {post.likes}</Text>
-            </Pressable>
+            <ButtonLike
+              liked={post.liked ?? false}
+              likes={post.likes}
+              onToggle={() => onToggleLike(post.id)}
+            />
             <Pressable onPress={() => console.log('Comentar')}>
               <Text style={styles.icon}>💬</Text>
             </Pressable>
@@ -50,38 +55,13 @@ export default function PostFeed({ posts }: PostFeedProps) {
 }
 
 const styles = StyleSheet.create({
-  postsContainer: {
-    flex: 1,
-  },
-  post: {
-    marginBottom: 15,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  firstPostHeader: {
-    paddingTop: 0,
-  },
-  postUsername: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  postImage: {
-    width: '100%',
-    height: 300,
-  },
-  postActions: {
-    flexDirection: 'row',
-    padding: 10,
-  },
-  postCaption: {
-    paddingHorizontal: 10,
-    paddingBottom: 5,
-  },
-  icon: {
-    fontSize: 20,
-    marginRight: 15,
-  },
+  postsContainer: { flex: 1 },
+  post: { marginBottom: 15 },
+  postHeader: { flexDirection: 'row', alignItems: 'center', padding: 10 },
+  firstPostHeader: { paddingTop: 0 },
+  postUsername: { fontWeight: 'bold', fontSize: 14 },
+  postImage: { width: '100%', height: 300 },
+  postActions: { flexDirection: 'row', padding: 10 },
+  postCaption: { paddingHorizontal: 10, paddingBottom: 5 },
+  icon: { fontSize: 20, marginRight: 15 },
 });

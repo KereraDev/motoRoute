@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useColorScheme } from '../../hooks/useColorScheme';
-import { Colors } from '../../constants/Colors';
+import { useColorScheme } from '../../../hooks/useColorScheme';
+import { Colors } from '../../../constants/Colors';
 
 export default function Header() {
   const colorScheme = useColorScheme();
 
   return (
     <View style={styles.header}>
-      <Text style={[styles.headerTitle, { color: Colors[colorScheme].text }]}>
+      <Text style={[styles.headerTitle, { color: Colors[colorScheme ? 'light' : 'dark'].text }]}>
         MotoRoute
       </Text>
       <View style={styles.headerIcons}>

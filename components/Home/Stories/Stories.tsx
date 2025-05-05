@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image } from 'react-native';
-import { useColorScheme } from '../../hooks/useColorScheme';
-import { Colors } from '../../constants/Colors';
+import { useColorScheme } from '../../../hooks/useColorScheme';
+import { Colors } from '../../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
