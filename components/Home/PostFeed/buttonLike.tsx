@@ -1,6 +1,6 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet, useColorScheme } from 'react-native';
-import { Colors } from '@/constants/Colors';
+import React from "react";
+import { Pressable, Text, StyleSheet, useColorScheme } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 type ButtonLikeProps = {
   liked: boolean;
@@ -8,7 +8,11 @@ type ButtonLikeProps = {
   onToggle: () => void;
 };
 
-export default function ButtonLike({ liked, likes, onToggle }: ButtonLikeProps) {
+export default function ButtonLike({
+  liked,
+  likes,
+  onToggle,
+}: ButtonLikeProps) {
   const colorScheme = useColorScheme();
 
   return (
@@ -20,11 +24,11 @@ export default function ButtonLike({ liked, likes, onToggle }: ButtonLikeProps) 
         style={[
           styles.icon,
           {
-            color: liked ? 'tomato' : Colors[colorScheme ?? 'light'].text,
+            color: liked ? "tomato" : Colors[colorScheme ?? "light"].text,
           },
         ]}
       >
-        {liked ? '❤️' : '🤍'} {likes}
+        {liked ? "❤️" : "🤍"} {likes}
       </Text>
     </Pressable>
   );
