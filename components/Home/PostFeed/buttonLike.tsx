@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, Text, StyleSheet, useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
+import ThemedText from "@/components/ui/ThemedText";
 
 type ButtonLikeProps = {
   liked: boolean;
@@ -20,7 +21,7 @@ export default function ButtonLike({
       onPress={onToggle}
       style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
     >
-      <Text
+      <ThemedText
         style={[
           styles.icon,
           {
@@ -29,7 +30,7 @@ export default function ButtonLike({
         ]}
       >
         {liked ? "❤️" : "🤍"} {likes}
-      </Text>
+      </ThemedText>
     </Pressable>
   );
 }

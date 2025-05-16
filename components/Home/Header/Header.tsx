@@ -1,29 +1,39 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { Colors } from "../../../constants/Colors";
+import { useUserStore } from "@/store/userStore";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import ThemedText from "@/components/ui/ThemedText";
 
 export default function Header() {
   const colorScheme = useColorScheme();
+  const { user } = useUserStore();
+  const router = useRouter();
 
   return (
     <View style={styles.header}>
-      <Text
+      <Image source={{ uri: user.avatar }} style={styles.avatar} />
+
+      <ThemedText
         style={[
           styles.headerTitle,
           { color: Colors[colorScheme ? "light" : "dark"].text },
         ]}
       >
-        MotoRoute
-      </Text>
-      <View style={styles.headerIcons}>
-        <Pressable onPress={() => console.log("Abrir notificaciones")}>
-          <Text style={styles.icon}>❤️</Text>
-        </Pressable>
-        <Pressable onPress={() => console.log("Abrir mensajes")}>
-          <Text style={styles.icon}>✈️</Text>
-        </Pressable>
-      </View>
+        Hola, {user.username}!
+      </ThemedText>
+
+      <Pressable
+        onPress={() => router.push("/amigos")}
+        style={({ hovered, pressed }) => [
+          styles.iconButton,
+          (hovered || pressed) && styles.iconButtonHover,
+        ]}
+      >
+        <Ionicons name="paper-plane" size={20} color="#000" />
+      </Pressable>
     </View>
   );
 }
@@ -33,19 +43,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "600",
+    flex: 1,
+    paddingHorizontal: 12,
   },
-  headerIcons: {
-    flexDirection: "row",
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 40,
+    resizeMode: "cover",
   },
-  icon: {
-    fontSize: 24,
-    marginLeft: 15,
+  iconButton: {
+    padding: 8,
+    borderRadius: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconButtonHover: {
+    backgroundColor: "#e6e6e6",
   },
 });

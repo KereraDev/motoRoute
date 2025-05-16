@@ -12,6 +12,7 @@ import { Colors } from "../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import ThemedText from "@/components/ui/ThemedText";
 
 type Story = {
   id: string;
@@ -24,9 +25,24 @@ export default function Stories() {
   const router = useRouter();
 
   const [stories, setStories] = useState<Story[]>([
-    { id: "1", username: "user1" },
-    { id: "2", username: "user2" },
-    { id: "3", username: "user3" },
+    {
+      id: "1",
+      username: "user1",
+      image:
+        "https://i.pinimg.com/originals/14/e6/2f/14e62fc271f351304c8b3986cea179e6.jpg",
+    },
+    {
+      id: "2",
+      username: "user2",
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4nyvBGIDunNc7Rob0Kz2IP-pSHBrI-EYrQw&s",
+    },
+    {
+      id: "3",
+      username: "user3",
+      image:
+        "https://i.pinimg.com/736x/6c/ed/24/6ced241d8eb4043839e59bdcc1ac2608.jpg",
+    },
   ]);
 
   const addHistory = async () => {
@@ -63,14 +79,14 @@ export default function Stories() {
         <View style={[styles.storyCircle, styles.addStoryCircle]}>
           <Ionicons name="add" size={30} color="#fff" />
         </View>
-        <Text
+        <ThemedText
           style={[
             styles.storyUsername,
             { color: Colors[colorScheme ? "dark" : "light"].text },
           ]}
         >
           Tu historia
-        </Text>
+        </ThemedText>
       </Pressable>
 
       {stories.map((story) => (
@@ -91,17 +107,19 @@ export default function Stories() {
             {story.image ? (
               <Image source={{ uri: story.image }} style={styles.storyImage} />
             ) : (
-              <Text style={styles.storyText}>{story.username[0]}</Text>
+              <ThemedText style={styles.storyText}>
+                {story.username[0]}
+              </ThemedText>
             )}
           </View>
-          <Text
+          <ThemedText
             style={[
               styles.storyUsername,
               { color: Colors[colorScheme ? "dark" : "light"].text },
             ]}
           >
             {story.username}
-          </Text>
+          </ThemedText>
         </Pressable>
       ))}
     </ScrollView>
@@ -121,8 +139,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   storyCircle: {
-    width: 100,
-    height: 100,
+    width: 60,
+    height: 60,
     borderRadius: 60,
     backgroundColor: "#ddd",
     justifyContent: "center",

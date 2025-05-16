@@ -1,3 +1,4 @@
+import ThemedText from "@/components/ui/ThemedText";
 import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 
@@ -8,9 +9,9 @@ export default function PerfilScreen() {
         source={{ uri: "https://via.placeholder.com/100" }}
         style={styles.avatar}
       />
-      <Text style={styles.name}>usuario</Text>
-      <Text style={styles.username}>@usuario</Text>
-      <Text style={styles.bio}>Lorep Insum</Text>
+      <ThemedText style={styles.name}>usuario</ThemedText>
+      <ThemedText style={styles.username}>@usuario</ThemedText>
+      <ThemedText style={styles.bio}>Lorep Insum</ThemedText>
     </View>
   );
 }

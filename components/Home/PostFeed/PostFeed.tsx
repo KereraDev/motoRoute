@@ -10,6 +10,7 @@ import {
 import { Colors } from "../../../constants/Colors";
 import { Post } from "../../../types/Post";
 import ButtonLike from "./buttonLike";
+import ThemedText from "@/components/ui/ThemedText";
 
 type PostFeedProps = {
   posts: Post[];
@@ -27,14 +28,14 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
           <View
             style={[styles.postHeader, index === 0 && styles.firstPostHeader]}
           >
-            <Text
+            <ThemedText
               style={[
                 styles.postUsername,
                 { color: Colors[colorScheme ?? "light"].text },
               ]}
             >
               {post.username}
-            </Text>
+            </ThemedText>
           </View>
 
           <Image source={{ uri: post.image }} style={styles.postImage} />
@@ -46,22 +47,26 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
               onToggle={() => onToggleLike(post.id)}
             />
             <Pressable onPress={() => console.log("Comentar")}>
-              <Text style={styles.icon}>💬</Text>
+              <ThemedText style={styles.icon}>💬</ThemedText>
             </Pressable>
             <Pressable onPress={() => console.log("Compartir")}>
-              <Text style={styles.icon}>✈️</Text>
+              <ThemedText style={styles.icon}>✈️</ThemedText>
             </Pressable>
           </View>
 
-          <Text
+          <ThemedText
             style={[
               styles.postCaption,
               { color: Colors[colorScheme ?? "light"].text },
             ]}
           >
-            <Text style={styles.postUsername}>{post.username}</Text>{" "}
-            {post.caption}
-          </Text>
+            <View style={styles.postCaption}>
+              <ThemedText style={styles.postUsername}>
+                {post.username}
+              </ThemedText>
+              <ThemedText>{post.caption}</ThemedText>
+            </View>
+          </ThemedText>
         </View>
       ))}
     </View>

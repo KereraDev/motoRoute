@@ -1,3 +1,4 @@
+import ThemedText from "@/components/ui/ThemedText";
 import { Link, Stack } from "expo-router";
 import { StyleSheet, View, Text, Pressable } from "react-native";
 
@@ -6,10 +7,12 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: "Oops!" }} />
       <View style={styles.container}>
-        <Text style={styles.title}>Esta pantalla no existe.</Text>
+        <ThemedText style={styles.title}>Esta pantalla no existe.</ThemedText>
         <Link href="/" asChild>
           <Pressable style={styles.link}>
-            <Text style={styles.linkText}>Ir a la pantalla principal</Text>
+            <ThemedText style={styles.linkText}>
+              Ir a la pantalla principal
+            </ThemedText>
           </Pressable>
         </Link>
       </View>
