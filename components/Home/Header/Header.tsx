@@ -1,11 +1,10 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet, Image } from "react-native";
-import { useColorScheme } from "../../../hooks/useColorScheme";
-import { Colors } from "../../../constants/Colors";
-import { useUserStore } from "@/store/userStore";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import ThemedText from "@/components/ui/ThemedText";
+import ThemedText from '@/components/ui/ThemedText';
+import { useUserStore } from '@/store/userStore';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { useColorScheme } from '../../../hooks/useColorScheme';
 
 export default function Header() {
   const colorScheme = useColorScheme();
@@ -19,14 +18,14 @@ export default function Header() {
       <ThemedText
         style={[
           styles.headerTitle,
-          { color: Colors[colorScheme ? "light" : "dark"].text },
+          { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
         ]}
       >
         Hola, {user.username}!
       </ThemedText>
 
       <Pressable
-        onPress={() => router.push("/amigos")}
+        onPress={() => router.push('/amigos')}
         style={({ hovered, pressed }) => [
           styles.iconButton,
           (hovered || pressed) && styles.iconButtonHover,
@@ -40,18 +39,18 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingTop: 10,
     paddingHorizontal: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: '#ddd',
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: '600',
     flex: 1,
     paddingHorizontal: 12,
   },
@@ -59,15 +58,15 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 40,
-    resizeMode: "cover",
+    resizeMode: 'cover',
   },
   iconButton: {
     padding: 8,
     borderRadius: 100,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iconButtonHover: {
-    backgroundColor: "#e6e6e6",
+    backgroundColor: '#e6e6e6',
   },
 });

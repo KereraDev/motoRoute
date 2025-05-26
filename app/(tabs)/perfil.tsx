@@ -1,47 +1,56 @@
-import ThemedText from "@/components/ui/ThemedText";
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import React from 'react';
+import { Image, ScrollView, StyleSheet, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useUserStore } from '@/store/userStore';
 
 export default function PerfilScreen() {
+  const { user } = useUserStore();
   return (
-    <View style={styles.container}>
-      <Image
-        source={{ uri: "https://via.placeholder.com/100" }}
-        style={styles.avatar}
-      />
-      <ThemedText style={styles.name}>usuario</ThemedText>
-      <ThemedText style={styles.username}>@usuario</ThemedText>
-      <ThemedText style={styles.bio}>Lorep Insum</ThemedText>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        <Text style={styles.username}>{user.username}</Text>
+        <Text style={styles.label}>Frase destacada:</Text>
+        <Text style={styles.text}>
+          "Explorador de rutas y amante de la aventura."
+        </Text>
+        <Text style={styles.label}>Rutas creadas:</Text>
+        <Text style={styles.text}>12 rutas compartidas</Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#fff',
+  },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
-    backgroundColor: "#fff",
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  username: {
-    fontSize: 16,
-    color: "#555",
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     marginBottom: 10,
   },
-  bio: {
-    textAlign: "center",
-    fontSize: 14,
-    color: "#333",
+  username: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 15,
+    color: '#555',
+  },
+  text: {
+    fontSize: 15,
+    color: '#333',
   },
 });

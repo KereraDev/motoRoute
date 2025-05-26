@@ -1,12 +1,12 @@
-import { Stack } from "expo-router";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { Stack } from 'expo-router';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 const dummyFriends = [
-  { id: "1", name: "Lucía" },
-  { id: "2", name: "Pedro" },
-  { id: "3", name: "Catalina" },
-  { id: "4", name: "Fabián" },
-  { id: "5", name: "Renata" },
+  { id: '1', name: 'Lucía' },
+  { id: '2', name: 'Pedro' },
+  { id: '3', name: 'Catalina' },
+  { id: '4', name: 'Fabián' },
+  { id: '5', name: 'Renata' },
 ];
 
 export default function AmigosScreen() {
@@ -14,9 +14,9 @@ export default function AmigosScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "Amigos",
-          animation: "slide_from_right",
-          headerStyle: { backgroundColor: "#fff" }, // 👈 fondo del header
+          title: 'Amigos',
+          animation: 'slide_from_right',
+          headerStyle: { backgroundColor: '#fff' }, // 👈 fondo del header
         }}
       />
       <View style={styles.wrapper}>
@@ -24,7 +24,7 @@ export default function AmigosScreen() {
         <View style={styles.backgroundFix} />
         <FlatList
           data={dummyFriends}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <Text style={styles.friend}>{item.name}</Text>
           )}
@@ -38,11 +38,11 @@ export default function AmigosScreen() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    position: "relative",
+    position: 'relative',
   },
   backgroundFix: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#fff", // 👈 capa blanca fija
+    backgroundColor: '#fff', // 👈 capa blanca fija
     zIndex: -1,
   },
   content: {
