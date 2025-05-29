@@ -1,5 +1,5 @@
 // components/CreatePost.tsx
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   TextInput,
@@ -7,22 +7,22 @@ import {
   Image,
   StyleSheet,
   Alert,
-} from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { NewPostInput } from "../../../types/Post";
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { NewPostInput } from '../../../types/Post';
 
 type CreatePostProps = {
   onPostCreated: (post: NewPostInput) => void;
 };
 
 export default function CreatePost({ onPostCreated }: CreatePostProps) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tus fotos");
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tus fotos');
       return;
     }
 
@@ -38,12 +38,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
 
   const handlePost = () => {
     if (!text.trim()) {
-      Alert.alert("Error", "Escribe algo antes de publicar.");
+      Alert.alert('Error', 'Escribe algo antes de publicar.');
       return;
     }
 
     onPostCreated({ text: text.trim(), imageUri });
-    setText("");
+    setText('');
     setImageUri(undefined);
   };
 
@@ -66,21 +66,21 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
 const styles = StyleSheet.create({
   container: {
     padding: 12,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 10,
     marginBottom: 16,
   },
   input: {
     height: 100,
-    textAlignVertical: "top",
+    textAlignVertical: 'top',
     marginBottom: 10,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderWidth: 1,
     padding: 10,
     borderRadius: 8,
   },
   image: {
-    width: "100%",
+    width: '100%',
     height: 200,
     marginVertical: 10,
     borderRadius: 8,

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   StyleSheet,
   Pressable,
   useColorScheme,
-} from "react-native";
-import { Colors } from "../../../constants/Colors";
-import { Post } from "../../../types/Post";
-import ButtonLike from "./buttonLike";
-import ThemedText from "@/components/ui/ThemedText";
+} from 'react-native';
+import { Colors } from '../../../constants/Colors';
+import { Post } from '../../../types/Post';
+import ButtonLike from './buttonLike';
+import ThemedText from '@/components/ui/ThemedText';
 
 type PostFeedProps = {
   posts: Post[];
@@ -28,10 +28,11 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
           <View
             style={[styles.postHeader, index === 0 && styles.firstPostHeader]}
           >
+            <Image source={{ uri: post.avatar }} style={styles.avatar} />
             <ThemedText
               style={[
                 styles.postUsername,
-                { color: Colors[colorScheme ?? "light"].text },
+                { color: Colors[colorScheme ?? 'light'].text },
               ]}
             >
               {post.username}
@@ -46,27 +47,20 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
               likes={post.likes}
               onToggle={() => onToggleLike(post.id)}
             />
-            <Pressable onPress={() => console.log("Comentar")}>
+            <Pressable onPress={() => console.log('Comentar')}>
               <ThemedText style={styles.icon}>💬</ThemedText>
             </Pressable>
-            <Pressable onPress={() => console.log("Compartir")}>
+            <Pressable onPress={() => console.log('Compartir')}>
               <ThemedText style={styles.icon}>✈️</ThemedText>
             </Pressable>
           </View>
 
-          <ThemedText
-            style={[
-              styles.postCaption,
-              { color: Colors[colorScheme ?? "light"].text },
-            ]}
-          >
-            <View style={styles.postCaption}>
-              <ThemedText style={styles.postUsername}>
-                {post.username}
-              </ThemedText>
-              <ThemedText>{post.caption}</ThemedText>
-            </View>
-          </ThemedText>
+          <View style={styles.postCaption}>
+            <ThemedText style={styles.postUsername}>
+              {post.username}{' '}
+            </ThemedText>
+            <ThemedText>{post.caption}</ThemedText>
+          </View>
         </View>
       ))}
     </View>
@@ -76,11 +70,32 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
 const styles = StyleSheet.create({
   postsContainer: { flex: 1 },
   post: { marginBottom: 15 },
-  postHeader: { flexDirection: "row", alignItems: "center", padding: 10 },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
   firstPostHeader: { paddingTop: 0 },
-  postUsername: { fontWeight: "bold", fontSize: 14 },
-  postImage: { width: "100%", height: 300 },
-  postActions: { flexDirection: "row", padding: 10 },
-  postCaption: { paddingHorizontal: 10, paddingBottom: 5 },
+  avatar: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    marginRight: 10,
+  },
+  postUsername: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  postImage: { width: '100%', height: 300 },
+  postActions: {
+    flexDirection: 'row',
+    padding: 10,
+  },
+  postCaption: {
+    paddingHorizontal: 10,
+    paddingBottom: 5,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   icon: { fontSize: 20, marginRight: 15 },
 });

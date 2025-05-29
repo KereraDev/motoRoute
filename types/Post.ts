@@ -1,6 +1,7 @@
 export type Post = {
   id: string;
   username: string;
+  avatar: string;
   image: string;
   likes: number;
   caption: string;

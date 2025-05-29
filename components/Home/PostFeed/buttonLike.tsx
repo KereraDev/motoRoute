@@ -1,7 +1,7 @@
-import React from "react";
-import { Pressable, Text, StyleSheet, useColorScheme } from "react-native";
-import { Colors } from "@/constants/Colors";
-import ThemedText from "@/components/ui/ThemedText";
+import React from 'react';
+import { Pressable, Text, StyleSheet, useColorScheme } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import ThemedText from '@/components/ui/ThemedText';
 
 type ButtonLikeProps = {
   liked: boolean;
@@ -25,11 +25,11 @@ export default function ButtonLike({
         style={[
           styles.icon,
           {
-            color: liked ? "tomato" : Colors[colorScheme ?? "light"].text,
+            color: liked ? 'tomato' : Colors[colorScheme ?? 'light'].text,
           },
         ]}
       >
-        {liked ? "❤️" : "🤍"} {likes}
+        {liked ? '❤️' : '🤍'} {likes}
       </ThemedText>
     </Pressable>
   );

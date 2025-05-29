@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,13 @@ import {
   StyleSheet,
   Pressable,
   Image,
-} from "react-native";
-import { useColorScheme } from "../../../hooks/useColorScheme";
-import { Colors } from "../../../constants/Colors";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import ThemedText from "@/components/ui/ThemedText";
+} from 'react-native';
+import { useColorScheme } from '../../../hooks/useColorScheme';
+import { Colors } from '../../../constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import ThemedText from '@/components/ui/ThemedText';
 
 type Story = {
   id: string;
@@ -26,29 +26,29 @@ export default function Stories() {
 
   const [stories, setStories] = useState<Story[]>([
     {
-      id: "1",
-      username: "user1",
+      id: '1',
+      username: 'user1',
       image:
-        "https://i.pinimg.com/originals/14/e6/2f/14e62fc271f351304c8b3986cea179e6.jpg",
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjutZ5Upym8nXjXhm5dtYdtA3r7gWRBGT8bg&s',
     },
     {
-      id: "2",
-      username: "user2",
+      id: '2',
+      username: 'user2',
       image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4nyvBGIDunNc7Rob0Kz2IP-pSHBrI-EYrQw&s",
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYxIHGvMAm1MDv-_oCzVAwRvihRd26_oY02Q&s',
     },
     {
-      id: "3",
-      username: "user3",
+      id: '3',
+      username: 'user3',
       image:
-        "https://i.pinimg.com/736x/6c/ed/24/6ced241d8eb4043839e59bdcc1ac2608.jpg",
+        'https://www.formulamoto.es/wp-content/uploads/2021/05/Suzuki-Hayabusa_1-1-1024x683.jpg',
     },
   ]);
 
   const addHistory = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      alert("I need permission for the use cam");
+      alert('I need permission for the use cam');
       return;
     }
 
@@ -82,23 +82,23 @@ export default function Stories() {
         <ThemedText
           style={[
             styles.storyUsername,
-            { color: Colors[colorScheme ? "dark" : "light"].text },
+            { color: Colors[colorScheme ? 'dark' : 'light'].text },
           ]}
         >
           Tu historia
         </ThemedText>
       </Pressable>
 
-      {stories.map((story) => (
+      {stories.map(story => (
         <Pressable
           key={story.id}
           style={styles.story}
           onPress={() =>
             router.push({
-              pathname: "/stories/[id]",
+              pathname: '/stories/[id]',
               params: {
                 id: story.id,
-                image: encodeURIComponent(story.image || ""),
+                image: encodeURIComponent(story.image || ''),
               },
             })
           }
@@ -115,7 +115,7 @@ export default function Stories() {
           <ThemedText
             style={[
               styles.storyUsername,
-              { color: Colors[colorScheme ? "dark" : "light"].text },
+              { color: Colors[colorScheme ? 'dark' : 'light'].text },
             ]}
           >
             {story.username}
@@ -135,38 +135,41 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   story: {
-    alignItems: "center",
+    alignItems: 'center',
     marginHorizontal: 5,
   },
   storyCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 60,
-    backgroundColor: "#ddd",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#f09433",
-    overflow: "hidden",
+    width: 120,
+    height: 200,
+    borderRadius: 20,
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderColor: '#fff',
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   addStoryCircle: {
-    backgroundColor: "#555",
-    borderColor: "#888",
+    width: 50,
+    height: 200,
+    backgroundColor: '#808080',
+    borderColor: '#888',
+    borderRadius: 12,
   },
   storyText: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: 'bold',
+    color: '#fff',
   },
   storyUsername: {
     fontSize: 12,
     marginTop: 5,
     maxWidth: 60,
-    textAlign: "center",
+    textAlign: 'center',
   },
   storyImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
 });
