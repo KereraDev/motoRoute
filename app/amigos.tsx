@@ -1,4 +1,3 @@
-import { Stack } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 const dummyFriends = [
@@ -11,27 +10,17 @@ const dummyFriends = [
 
 export default function AmigosScreen() {
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: 'Amigos',
-          animation: 'slide_from_right',
-          headerStyle: { backgroundColor: '#fff' }, // 👈 fondo del header
-        }}
+    <View style={styles.wrapper}>
+      <View />
+      <FlatList
+        data={dummyFriends}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <Text style={styles.friend}>{item.name}</Text>
+        )}
+        contentContainerStyle={styles.content}
       />
-      <View style={styles.wrapper}>
-        {/* Capa blanca fija para evitar el flash */}
-        <View style={styles.backgroundFix} />
-        <FlatList
-          data={dummyFriends}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <Text style={styles.friend}>{item.name}</Text>
-          )}
-          contentContainerStyle={styles.content}
-        />
-      </View>
-    </>
+    </View>
   );
 }
 
@@ -39,11 +28,7 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     position: 'relative',
-  },
-  backgroundFix: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#fff', // 👈 capa blanca fija
-    zIndex: -1,
+    backgroundColor: '#fff',
   },
   content: {
     padding: 20,

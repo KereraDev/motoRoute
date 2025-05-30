@@ -1,10 +1,10 @@
-import { Tabs } from "expo-router";
-import React from "react";
-import { Platform } from "react-native";
-import { Colors } from "../../constants/Colors";
-import { useColorScheme } from "../../hooks/useColorScheme";
-import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Platform } from 'react-native';
+import { Colors } from '../../constants/Colors';
+import { useColorScheme } from '../../hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -12,11 +12,11 @@ export default function TabLayout() {
     <SafeAreaProvider>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+          tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
           headerShown: false,
           tabBarStyle: Platform.select({
             ios: {
-              position: "absolute",
+              position: 'absolute',
             },
             default: {},
           }),
@@ -25,7 +25,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "",
+            title: '',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" color={color} size={size} />
             ),
@@ -34,7 +34,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="buscar"
           options={{
-            title: "",
+            title: '',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="search" color={color} size={size} />
             ),
@@ -43,7 +43,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="anadir"
           options={{
-            title: "",
+            title: '',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="add" color={color} size={size} />
             ),
@@ -52,7 +52,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="perfil"
           options={{
-            title: "",
+            title: '',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="person" color={color} size={size} />
             ),

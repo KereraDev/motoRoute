@@ -1,12 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import ThemedText from '@/components/ui/ThemedText';
 
 export default function StoryScreen() {
   const { id, image } = useLocalSearchParams();
   const router = useRouter();
-
   const decodedImage = image ? decodeURIComponent(image as string) : null;
 
   return (
