@@ -23,7 +23,7 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen
-          name="index"
+          name="home"
           options={{
             title: '',
             tabBarIcon: ({ color, size }) => (
@@ -41,7 +41,7 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="anadir"
+          name="crearRuta"
           options={{
             title: '',
             tabBarIcon: ({ color, size }) => (

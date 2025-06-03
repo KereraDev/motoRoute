@@ -1,8 +1,3 @@
-import { usePostStore } from '@/store/postStore';
-import { NewPostInput } from '@/types/Post';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -15,26 +10,28 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapView, { Marker } from 'react-native-maps';
 
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
+import { usePostStore } from '@/store/postStore';
+import { NewPostInput } from '@/types/Post';
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+}
 export default function Anadir() {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
-  const [amigosSeleccionados, setAmigosSeleccionados] = useState<string[]>([]);
-
-  const dummyFriends = ['Lucía', 'Pedro', 'Catalina', 'Fabián', 'Renata'];
-
-  const toggleFriend = (name: string) => {
-    setAmigosSeleccionados(prev =>
-      prev.includes(name)
-        ? prev.filter(amigo => amigo !== name)
-        : [...prev, name]
-    );
-  };
+  const [marker, setMarker] = useState<LocationCoords | null>(null);
 
   const router = useRouter();
   const addPost = usePostStore(state => state.addPost);
@@ -73,12 +70,8 @@ export default function Anadir() {
       return;
     }
 
-    const amigosTexto = amigosSeleccionados.length
-      ? `\n\n👥 Acompañantes:\n- ${amigosSeleccionados.join('\n- ')}`
-      : '';
-
     const newPost: NewPostInput = {
-      text: `📍 ${title}\n${text}\nInicio: ${origen} → Destino: ${destino}${amigosTexto}`,
+      text: `📍 ${title}\n${text}\nInicio: ${origen} → Destino: ${destino}`,
       imageUri,
     };
 
@@ -88,15 +81,39 @@ export default function Anadir() {
     setOrigen('');
     setDestino('');
     setImageUri(undefined);
-    setAmigosSeleccionados([]);
 
     Alert.alert('Éxito', '✅ Ruta publicada con éxito');
-
     router.replace('/');
   };
 
   const handleCancel = () => {
     router.back();
+  };
+  const geocodeOrigen = async () => {
+    if (!origen.trim()) return;
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(origen)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'MiAppReactNative/1.0',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setMarker({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
+      } else {
+        Alert.alert('No encontrado', 'No se encontró la dirección ingresada.');
+      }
+    } catch (error) {
+      console.error('Error geocodificando:', error);
+      Alert.alert('Error', 'No se pudo buscar la dirección.');
+    }
   };
 
   return (
@@ -135,6 +152,7 @@ export default function Anadir() {
             placeholderTextColor="#999"
             value={origen}
             onChangeText={setOrigen}
+            onBlur={geocodeOrigen}
             style={styles.input}
           />
 
@@ -146,20 +164,18 @@ export default function Anadir() {
             style={styles.input}
           />
 
-          <View style={styles.friendsSection}>
-            <Text style={styles.label}>Acompañantes:</Text>
-            {dummyFriends.map(name => (
-              <TouchableOpacity
-                key={name}
-                onPress={() => toggleFriend(name)}
-                style={[
-                  styles.friendItem,
-                  amigosSeleccionados.includes(name) && styles.selectedFriend,
-                ]}
-              >
-                <Text>{name}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              region={{
+                latitude: marker?.latitude ?? -33.4489,
+                longitude: marker?.longitude ?? -70.6693,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+            >
+              {marker && <Marker coordinate={marker} title="Lugar de inicio" />}
+            </MapView>
           </View>
 
           <View style={styles.buttonRow}>
@@ -223,21 +239,14 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 10,
   },
-  friendsSection: {
-    marginTop: 20,
+  mapContainer: {
+    height: 200,
+    marginBottom: 12,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  friendItem: {
-    padding: 10,
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    marginBottom: 6,
-  },
-  selectedFriend: {
-    backgroundColor: '#d0e8ff',
+  map: {
+    flex: 1,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -261,5 +270,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
