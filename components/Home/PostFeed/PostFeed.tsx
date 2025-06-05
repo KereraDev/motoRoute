@@ -7,6 +7,7 @@ import {
   Pressable,
   useColorScheme,
 } from 'react-native';
+import MapView, { Polyline, Marker } from 'react-native-maps';
 import { Colors } from '../../../constants/Colors';
 import { Post } from '../../../types/Post';
 import ButtonLike from './buttonLike';
@@ -39,7 +40,37 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
             </ThemedText>
           </View>
 
-          <Image source={{ uri: post.image }} style={styles.postImage} />
+          {post.route && post.route.length > 1 ? (
+            <MapView
+              style={styles.postImage}
+              initialRegion={{
+                latitude: post.route[0].latitude,
+                longitude: post.route[0].longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              scrollEnabled={true}
+              zoomEnabled={true}
+            >
+              <Polyline
+                coordinates={post.route}
+                strokeColor="#007AFF"
+                strokeWidth={4}
+              />
+              <Marker
+                coordinate={post.route[0]}
+                title="Inicio"
+                pinColor="green"
+              />
+              <Marker
+                coordinate={post.route[post.route.length - 1]}
+                title="Fin"
+                pinColor="red"
+              />
+            </MapView>
+          ) : (
+            <Image source={{ uri: post.image }} style={styles.postImage} />
+          )}
 
           <View style={styles.postActions}>
             <ButtonLike
@@ -94,8 +125,7 @@ const styles = StyleSheet.create({
   postCaption: {
     paddingHorizontal: 10,
     paddingBottom: 5,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
   },
   icon: { fontSize: 20, marginRight: 15 },
 });

@@ -66,6 +66,7 @@ export const usePostStore = create<PostStore>(set => ({
       caption: data.text,
       liked: false,
       comments: [],
+      route: data.route,
     };
     set(state => ({ posts: [newPost, ...state.posts] }));
   },

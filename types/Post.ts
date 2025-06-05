@@ -1,3 +1,7 @@
+export type LocationCoords = {
+  latitude: number;
+  longitude: number;
+};
 export type Post = {
   id: string;
   username: string;
@@ -7,9 +11,11 @@ export type Post = {
   caption: string;
   liked?: boolean;
   comments?: string[];
+  route?: LocationCoords[];
 };
 
 export type NewPostInput = {
   text: string;
   imageUri?: string;
+  route?: LocationCoords[];
 };

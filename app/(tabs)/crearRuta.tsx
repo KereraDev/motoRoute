@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Alert,
   Image,
@@ -10,29 +10,34 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 import { usePostStore } from '@/store/postStore';
 import { NewPostInput } from '@/types/Post';
+
 interface LocationCoords {
   latitude: number;
   longitude: number;
 }
+
 export default function Anadir() {
-  const [title, setTitle] = useState('');
   const [text, setText] = useState('');
-  const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
-  const [marker, setMarker] = useState<LocationCoords | null>(null);
+  const [markerDestino, setMarkerDestino] = useState<LocationCoords | null>(
+    null
+  );
+  const [rutaRecorrida, setRutaRecorrida] = useState<LocationCoords[]>([]);
+  const [seguimientoActivo, setSeguimientoActivo] = useState(false);
 
+  const seguimientoRef = useRef<Location.LocationSubscription | null>(null);
   const router = useRouter();
   const addPost = usePostStore(state => state.addPost);
 
@@ -56,10 +61,8 @@ export default function Anadir() {
   const handlePost = () => {
     const missingFields = [];
 
-    if (!title.trim()) missingFields.push('Título');
-    if (!imageUri) missingFields.push('Imagen');
     if (!text.trim()) missingFields.push('Descripción');
-    if (!origen.trim()) missingFields.push('Lugar de inicio');
+    if (rutaRecorrida.length < 2) missingFields.push('Ruta trazada');
     if (!destino.trim()) missingFields.push('Destino');
 
     if (missingFields.length > 0) {
@@ -71,30 +74,34 @@ export default function Anadir() {
     }
 
     const newPost: NewPostInput = {
-      text: `📍 ${title}\n${text}\nInicio: ${origen} → Destino: ${destino}`,
+      text: `${destino}\n${text}`,
       imageUri,
+      route: rutaRecorrida,
     };
 
     addPost(newPost);
-    setTitle('');
     setText('');
-    setOrigen('');
     setDestino('');
     setImageUri(undefined);
+    setMarkerDestino(null);
+    setRutaRecorrida([]);
+    detenerSeguimiento();
 
     Alert.alert('Éxito', '✅ Ruta publicada con éxito');
-    router.replace('/');
+    router.replace('/home');
   };
 
   const handleCancel = () => {
+    detenerSeguimiento();
     router.back();
   };
-  const geocodeOrigen = async () => {
-    if (!origen.trim()) return;
+
+  const geocodeDestino = async () => {
+    if (!destino.trim()) return;
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(origen)}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}&limit=1`,
         {
           headers: {
             'User-Agent': 'MiAppReactNative/1.0',
@@ -106,40 +113,88 @@ export default function Anadir() {
 
       if (data.length > 0) {
         const { lat, lon } = data[0];
-        setMarker({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
+        setMarkerDestino({
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon),
+        });
       } else {
         Alert.alert('No encontrado', 'No se encontró la dirección ingresada.');
       }
     } catch (error) {
-      console.error('Error geocodificando:', error);
+      console.error('Error geocodificando destino:', error);
       Alert.alert('Error', 'No se pudo buscar la dirección.');
     }
+  };
+
+  const comenzarSeguimiento = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso denegado', 'No se puede acceder a la ubicación.');
+      return;
+    }
+
+    setRutaRecorrida([]);
+    setSeguimientoActivo(true);
+
+    const sub = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 2000,
+        distanceInterval: 5,
+      },
+      location => {
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setRutaRecorrida(prev => [...prev, coords]);
+      }
+    );
+
+    seguimientoRef.current = sub;
+
+    // Detener automáticamente después de 10 minutos
+    setTimeout(
+      () => {
+        if (seguimientoRef.current) detenerSeguimiento();
+      },
+      10 * 60 * 1000
+    );
+  };
+
+  const detenerSeguimiento = () => {
+    if (seguimientoRef.current) {
+      seguimientoRef.current.remove();
+      seguimientoRef.current = null;
+    }
+    setSeguimientoActivo(false);
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={['top']}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.header}>Nueva ruta</Text>
+          <View style={styles.headerContainer}>
+            <Text style={styles.header}>Crear Ruta</Text>
+            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.image} />
+              ) : (
+                <Ionicons name="camera" size={30} color="#888" />
+              )}
+            </TouchableOpacity>
+          </View>
 
           <TextInput
-            placeholder="Título de la ruta"
+            placeholder="Nombre de la ruta."
             placeholderTextColor="#999"
-            value={title}
-            onChangeText={setTitle}
+            value={destino}
+            onChangeText={setDestino}
             style={styles.input}
           />
 
-          <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.image} />
-            ) : (
-              <Ionicons name="camera" size={40} color="#888" />
-            )}
-          </TouchableOpacity>
-
           <TextInput
-            placeholder="Descripción"
+            placeholder="Descripción."
             placeholderTextColor="#999"
             value={text}
             onChangeText={setText}
@@ -147,34 +202,56 @@ export default function Anadir() {
             style={[styles.input, styles.textarea]}
           />
 
-          <TextInput
-            placeholder="Lugar de inicio"
-            placeholderTextColor="#999"
-            value={origen}
-            onChangeText={setOrigen}
-            onBlur={geocodeOrigen}
-            style={styles.input}
-          />
-
-          <TextInput
-            placeholder="Destino"
-            placeholderTextColor="#999"
-            value={destino}
-            onChangeText={setDestino}
-            style={styles.input}
-          />
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={
+              seguimientoActivo ? detenerSeguimiento : comenzarSeguimiento
+            }
+          >
+            <Text style={styles.locationButtonText}>
+              {seguimientoActivo
+                ? '🛑 Detener seguimiento'
+                : '▶️ Iniciar ruta con mi movimiento'}
+            </Text>
+          </TouchableOpacity>
 
           <View style={styles.mapContainer}>
             <MapView
               style={styles.map}
               region={{
-                latitude: marker?.latitude ?? -33.4489,
-                longitude: marker?.longitude ?? -70.6693,
+                latitude:
+                  rutaRecorrida.at(-1)?.latitude ??
+                  markerDestino?.latitude ??
+                  -33.4489,
+                longitude:
+                  rutaRecorrida.at(-1)?.longitude ??
+                  markerDestino?.longitude ??
+                  -70.6693,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
             >
-              {marker && <Marker coordinate={marker} title="Lugar de inicio" />}
+              {rutaRecorrida.length > 0 && (
+                <Marker
+                  coordinate={rutaRecorrida[0]}
+                  title="Inicio"
+                  pinColor="green"
+                />
+              )}
+              {markerDestino && (
+                <Marker
+                  coordinate={markerDestino}
+                  title="Destino"
+                  pinColor="red"
+                />
+              )}
+              {rutaRecorrida.length > 1 && (
+                <Polyline
+                  coordinates={rutaRecorrida}
+                  strokeColor="#28a745"
+                  strokeWidth={4}
+                />
+              )}
             </MapView>
           </View>
 
@@ -205,6 +282,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flex: 1,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   scrollContent: {
     paddingBottom: 40,
   },
@@ -227,17 +310,22 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   imagePicker: {
-    height: 200,
-    backgroundColor: '#eee',
-    borderRadius: 10,
-    marginBottom: 12,
+    height: 60,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: {
-    height: '100%',
-    width: '100%',
+  image: {},
+  locationButton: {
+    backgroundColor: '#eee',
     borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  locationButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
   },
   mapContainer: {
     height: 200,
@@ -247,6 +335,8 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -270,10 +360,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

@@ -13,7 +13,7 @@ export default function PerfilScreen() {
         <Text style={styles.username}>{user.username}</Text>
         <Text style={styles.label}>Frase destacada:</Text>
         <Text style={styles.text}>
-          "Explorador de rutaas y amante de la aventura."
+          Explorador de rutaas y amante de la aventura.
         </Text>
         <Text style={styles.label}>Rutas creadas:</Text>
         <Text style={styles.text}>12 rutas compartidas</Text>
