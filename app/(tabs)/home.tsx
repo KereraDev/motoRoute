@@ -1,6 +1,5 @@
 import Header from '@/components/Home/Header/Header';
 import PostFeed from '@/components/Home/PostFeed/PostFeed';
-import Stories from '@/components/Home/Stories/Stories';
 import { usePostStore } from '@/store/postStore';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -9,7 +8,6 @@ import { useColorScheme } from '../../hooks/useColorScheme';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
-
   const posts = usePostStore(state => state.posts);
   const toggleLike = usePostStore(state => state.toggleLike);
 
@@ -26,15 +24,8 @@ export default function HomeScreen() {
       <Header />
 
       <ScrollView style={styles.mainScroll}>
-        <Stories />
         <View style={styles.separator} />
-        <PostFeed
-          posts={posts}
-          onToggleLike={toggleLike}
-          onOpenComments={postId =>
-            console.log('Abrir comentarios de:', postId)
-          }
-        />
+        <PostFeed posts={posts} onToggleLike={toggleLike} />
       </ScrollView>
     </View>
   );

@@ -1,220 +1,186 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  ActivityIndicator,
+  Text,
   TextInput,
   StyleSheet,
-  Alert,
   FlatList,
-  TouchableOpacity,
-  Text,
+  Image,
+  Pressable,
+  useColorScheme,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
-
-interface LocationCoords {
-  latitude: number;
-  longitude: number;
-}
-
-interface Suggestion {
-  display_name: string;
-  lat: string;
-  lon: string;
-}
+import { usePostStore } from '@/store/postStore';
 
 export default function BuscarScreen() {
-  const [location, setLocation] = useState<LocationCoords | null>(null);
-  const [loading, setLoading] = useState(true);
+  const colorScheme = useColorScheme();
+  const posts = usePostStore(state => state.posts);
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isSearchCompleted, setIsSearchCompleted] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Error', 'Permiso de ubicación denegado');
-        setLoading(false);
-        return;
-      }
-
-      const { coords } = await Location.getCurrentPositionAsync({});
-      setLocation({ latitude: coords.latitude, longitude: coords.longitude });
-      setLoading(false);
-    })();
-  }, []);
-
-  const fetchSuggestions = async (query: string) => {
-    if (!query || query.length < 3 || isSearchCompleted) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query
-        )}&limit=5`,
-        {
-          headers: {
-            'User-Agent': 'MiAppReactNative/1.0',
-          },
-        }
-      );
-      const data = await response.json();
-      setSuggestions(data);
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
-      setSuggestions([]);
-    }
-  };
-
-  const handleSearch = async (query: string = searchQuery) => {
-    if (!query) {
-      Alert.alert('Error', 'Ingresa un lugar para buscar');
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query
-        )}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'MiAppReactNative/1.0',
-          },
-        }
-      );
-      const data = await response.json();
-
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
-        setSearchQuery(data[0].display_name);
-        setSuggestions([]);
-        setIsSearchCompleted(true); // Marca la búsqueda como completada
-      } else {
-        Alert.alert('Error', 'No se encontraron resultados para la búsqueda');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo realizar la búsqueda');
-      console.error(error);
-    }
-  };
-
-  const handleSelectSuggestion = (suggestion: Suggestion) => {
-    setSearchQuery(suggestion.display_name);
-    setIsSearchCompleted(true); // Marca la búsqueda como completada
-    handleSearch(suggestion.display_name);
-  };
-
-  if (loading || !location) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const filteredPosts = [...posts]
+    .filter(post =>
+      `${post.username} ${post.caption}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0));
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.viewContainer}>
-        <TouchableOpacity onPress={() => handleSearch()}>
-          <Ionicons name="search-outline" style={styles.iconLeft} />
-        </TouchableOpacity>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
+      ]}
+    >
+      <View style={styles.searchBarWrapper}>
+        <Ionicons
+          name="search"
+          size={20}
+          color={colorScheme === 'dark' ? '#fff' : '#000'}
+        />
         <TextInput
-          style={styles.input}
-          placeholder="Buscar rutas o destinos..."
-          placeholderTextColor="#999"
+          style={[
+            styles.searchInput,
+            { color: colorScheme === 'dark' ? '#fff' : '#000' },
+          ]}
+          placeholder="Buscar rutas..."
+          placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
           value={searchQuery}
-          onChangeText={text => {
-            setSearchQuery(text);
-            setIsSearchCompleted(false); // Habilita sugerencias al escribir
-            fetchSuggestions(text);
-          }}
+          onChangeText={setSearchQuery}
         />
       </View>
-      {suggestions.length > 0 && (
-        <FlatList
-          style={styles.suggestionsContainer}
-          data={suggestions}
-          keyExtractor={(item, index) => `${item.lat}-${item.lon}-${index}`}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.suggestionItem}
-              onPress={() => handleSelectSuggestion(item)}
+
+      <FlatList
+        data={filteredPosts}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.userRow}>
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
+              <Text
+                style={[
+                  styles.username,
+                  { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                ]}
+              >
+                @{item.username}
+              </Text>
+            </View>
+
+            <MapView
+              style={styles.mapPreview}
+              initialRegion={{
+                latitude: item.route?.[0]?.latitude ?? -33.4489,
+                longitude: item.route?.[0]?.longitude ?? -70.6693,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
             >
-              <Text style={styles.suggestionText}>{item.display_name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      )}
-      <MapView
-        style={styles.map}
-        region={{
-          ...location,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        <Marker
-          coordinate={location}
-          title={searchQuery || 'Ubicación actual'}
-        />
-      </MapView>
-    </SafeAreaView>
+              {item.route && item.route.length > 1 && (
+                <>
+                  <Polyline
+                    coordinates={item.route}
+                    strokeColor="#007AFF"
+                    strokeWidth={4}
+                  />
+                  <Marker
+                    coordinate={item.route[0]}
+                    title="Inicio"
+                    pinColor="green"
+                  />
+                  <Marker
+                    coordinate={item.route[item.route.length - 1]}
+                    title="Fin"
+                    pinColor="red"
+                  />
+                </>
+              )}
+            </MapView>
+
+            <Text
+              style={[
+                styles.caption,
+                { color: colorScheme === 'dark' ? '#eee' : '#333' },
+              ]}
+            >
+              📍 {item.caption}
+            </Text>
+
+            <View style={styles.likesRow}>
+              <Ionicons
+                name="heart"
+                size={18}
+                color={colorScheme === 'dark' ? 'tomato' : 'red'}
+              />
+              <Text style={{ color: colorScheme === 'dark' ? '#fff' : '#000' }}>
+                {' '}
+                {item.likes}
+              </Text>
+            </View>
+          </View>
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    padding: 16,
-    flex: 1,
-  },
-  viewContainer: {
+  container: { flex: 1, paddingHorizontal: 12, paddingTop: 16 },
+  searchBarWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
+    backgroundColor: '#e0e0e0',
     borderRadius: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 12,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  input: {
+  searchInput: {
     flex: 1,
-    paddingVertical: 12,
-  },
-  iconLeft: {
-    fontSize: 20,
-    color: '#007AFF',
-    marginRight: 8,
-  },
-  map: {
-    flex: 1,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  suggestionsContainer: {
-    maxHeight: 150,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  suggestionItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  suggestionText: {
+    height: 40,
+    marginLeft: 8,
     fontSize: 16,
+  },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  card: {
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: 10,
+  },
+  username: {
+    fontWeight: 'bold',
+  },
+  mapPreview: {
+    width: '100%',
+    height: 200,
+  },
+  caption: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+  },
+  likesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Alert,
   Image,
@@ -10,16 +10,16 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-
-import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 import { usePostStore } from '@/store/postStore';
+import { useCameraStore } from '@/store/cameraStore';
 import { NewPostInput } from '@/types/Post';
 
 interface LocationCoords {
@@ -28,6 +28,9 @@ interface LocationCoords {
 }
 
 export default function Anadir() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const [text, setText] = useState('');
   const [destino, setDestino] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
@@ -40,30 +43,24 @@ export default function Anadir() {
   const seguimientoRef = useRef<Location.LocationSubscription | null>(null);
   const router = useRouter();
   const addPost = usePostStore(state => state.addPost);
+  const { photoUri, clearPhoto } = useCameraStore();
 
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tus fotos');
-      return;
+  useEffect(() => {
+    if (photoUri && !imageUri) {
+      setImageUri(photoUri);
     }
+  }, [photoUri]);
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-    }
+  const openCamera = () => {
+    router.push('/camera');
   };
 
   const handlePost = () => {
     const missingFields = [];
-
     if (!text.trim()) missingFields.push('Descripción');
     if (rutaRecorrida.length < 2) missingFields.push('Ruta trazada');
     if (!destino.trim()) missingFields.push('Destino');
+    if (!imageUri) missingFields.push('Imagen');
 
     if (missingFields.length > 0) {
       Alert.alert(
@@ -80,6 +77,7 @@ export default function Anadir() {
     };
 
     addPost(newPost);
+    clearPhoto();
     setText('');
     setDestino('');
     setImageUri(undefined);
@@ -90,27 +88,14 @@ export default function Anadir() {
     Alert.alert('Éxito', '✅ Ruta publicada con éxito');
     router.replace('/home');
   };
-
-  const handleCancel = () => {
-    detenerSeguimiento();
-    router.back();
-  };
-
   const geocodeDestino = async () => {
     if (!destino.trim()) return;
-
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'MiAppReactNative/1.0',
-          },
-        }
+        { headers: { 'User-Agent': 'MiAppReactNative/1.0' } }
       );
-
       const data = await response.json();
-
       if (data.length > 0) {
         const { lat, lon } = data[0];
         setMarkerDestino({
@@ -153,7 +138,6 @@ export default function Anadir() {
 
     seguimientoRef.current = sub;
 
-    // Detener automáticamente después de 10 minutos
     setTimeout(
       () => {
         if (seguimientoRef.current) detenerSeguimiento();
@@ -172,46 +156,80 @@ export default function Anadir() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? '#121212' : '#fff' },
+        ]}
+        edges={['top']}
+      >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.headerContainer}>
-            <Text style={styles.header}>Crear Ruta</Text>
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+            <Text style={[styles.header, { color: isDark ? '#fff' : '#000' }]}>
+              Crear Ruta
+            </Text>
+            <TouchableOpacity style={styles.imagePicker} onPress={openCamera}>
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.image} />
               ) : (
-                <Ionicons name="camera" size={30} color="#888" />
+                <Ionicons
+                  name="camera"
+                  size={30}
+                  color={isDark ? '#ccc' : '#888'}
+                />
               )}
             </TouchableOpacity>
           </View>
 
           <TextInput
             placeholder="Nombre de la ruta."
-            placeholderTextColor="#999"
+            placeholderTextColor={isDark ? '#aaa' : '#999'}
             value={destino}
             onChangeText={setDestino}
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9',
+                color: isDark ? '#fff' : '#000',
+              },
+            ]}
+            onBlur={geocodeDestino}
           />
 
           <TextInput
             placeholder="Descripción."
-            placeholderTextColor="#999"
+            placeholderTextColor={isDark ? '#aaa' : '#999'}
             value={text}
             onChangeText={setText}
             multiline
-            style={[styles.input, styles.textarea]}
+            style={[
+              styles.input,
+              styles.textarea,
+              {
+                backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9',
+                color: isDark ? '#fff' : '#000',
+              },
+            ]}
           />
 
           <TouchableOpacity
-            style={styles.locationButton}
+            style={[
+              styles.locationButton,
+              { backgroundColor: isDark ? '#008000' : '#008000' },
+            ]}
             onPress={
               seguimientoActivo ? detenerSeguimiento : comenzarSeguimiento
             }
           >
-            <Text style={styles.locationButtonText}>
+            <Text
+              style={[
+                styles.locationButtonText,
+                { color: isDark ? '#fff' : '#333' },
+              ]}
+            >
               {seguimientoActivo
                 ? '🛑 Detener seguimiento'
-                : '▶️ Iniciar ruta con mi movimiento'}
+                : '📌 Iniciar ruta con mi movimiento'}
             </Text>
           </TouchableOpacity>
 
@@ -257,13 +275,6 @@ export default function Anadir() {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={[styles.button, styles.cancel]}
-              onPress={handleCancel}
-            >
-              <Text style={styles.buttonText}>Cancelar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               style={[styles.button, styles.publish]}
               onPress={handlePost}
             >
@@ -277,67 +288,44 @@ export default function Anadir() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#fff',
-    flex: 1,
-  },
+  container: { padding: 16, flex: 1 },
+  scrollContent: { paddingBottom: 40 },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
+  header: { fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
   input: {
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
-    backgroundColor: '#f9f9f9',
   },
-  textarea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
+  textarea: { height: 100, textAlignVertical: 'top' },
   imagePicker: {
     height: 60,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: {},
+  image: { width: 60, height: 60, borderRadius: 12 },
   locationButton: {
-    backgroundColor: '#eee',
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
     alignItems: 'center',
   },
-  locationButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
+  locationButtonText: { fontWeight: 'bold' },
   mapContainer: {
     height: 200,
     marginBottom: 12,
     borderRadius: 10,
     overflow: 'hidden',
   },
-  map: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
+  map: { flex: 1, width: '100%', height: '100%' },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -350,12 +338,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 4,
   },
-  publish: {
-    backgroundColor: '#2196F3',
-  },
-  cancel: {
-    backgroundColor: '#ccc',
-  },
+  publish: { backgroundColor: '#008000' },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',

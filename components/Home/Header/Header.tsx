@@ -21,7 +21,7 @@ export default function Header() {
           { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
         ]}
       >
-        Hola, {user.username}!
+        Hola, {user.username} !
       </ThemedText>
 
       <Pressable
@@ -31,7 +31,11 @@ export default function Header() {
           (hovered || pressed) && styles.iconButtonHover,
         ]}
       >
-        <Ionicons name="paper-plane" size={20} color="#000" />
+        <Ionicons
+          name="paper-plane-outline"
+          size={20}
+          color={colorScheme === 'dark' ? '#fff' : '#000'}
+        />
       </Pressable>
     </View>
   );
@@ -45,8 +49,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingHorizontal: 12,
     paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   headerTitle: {
     fontSize: 20,

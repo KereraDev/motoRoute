@@ -52,10 +52,7 @@ export default function RootLayout() {
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="amigos" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="stories/[id]"
-                options={{ headerShown: false }}
-              />
+              <Stack.Screen name="camera" options={{ headerShown: false }} />
             </Stack>
           </SafeAreaView>
         </ThemeProvider>

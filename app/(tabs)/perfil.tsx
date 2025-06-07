@@ -1,22 +1,43 @@
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text } from 'react-native';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useUserStore } from '@/store/userStore';
 
 export default function PerfilScreen() {
   const { user } = useUserStore();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: isDark ? '#121212' : '#fff' },
+      ]}
+    >
       <ScrollView contentContainerStyle={styles.container}>
         <Image source={{ uri: user.avatar }} style={styles.avatar} />
-        <Text style={styles.username}>{user.username}</Text>
-        <Text style={styles.label}>Frase destacada:</Text>
-        <Text style={styles.text}>
-          Explorador de rutaas y amante de la aventura.
+        <Text style={[styles.username, { color: isDark ? '#fff' : '#000' }]}>
+          {user.username}
         </Text>
-        <Text style={styles.label}>Rutas creadas:</Text>
-        <Text style={styles.text}>12 rutas compartidas</Text>
+        <Text style={[styles.label, { color: isDark ? '#ccc' : '#555' }]}>
+          Frase destacada:
+        </Text>
+        <Text style={[styles.text, { color: isDark ? '#ddd' : '#333' }]}>
+          Explorador de rutas y amante de la aventura.
+        </Text>
+        <Text style={[styles.label, { color: isDark ? '#ccc' : '#555' }]}>
+          Rutas creadas:
+        </Text>
+        <Text style={[styles.text, { color: isDark ? '#ddd' : '#333' }]}>
+          12 rutas compartidas
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -25,7 +46,6 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   container: {
     alignItems: 'center',
@@ -47,10 +67,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 15,
-    color: '#555',
   },
   text: {
     fontSize: 15,
-    color: '#333',
   },
 });

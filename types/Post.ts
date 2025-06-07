@@ -2,6 +2,16 @@ export type LocationCoords = {
   latitude: number;
   longitude: number;
 };
+export type Comment = {
+  id: string;
+  text: string;
+  user: {
+    username: string;
+    avatar: string;
+  };
+  likes?: number;
+  liked?: boolean;
+};
 export type Post = {
   id: string;
   username: string;
@@ -10,7 +20,7 @@ export type Post = {
   likes: number;
   caption: string;
   liked?: boolean;
-  comments?: string[];
+  comments?: Comment[];
   route?: LocationCoords[];
 };
 

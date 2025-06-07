@@ -1,26 +1,81 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   Pressable,
   useColorScheme,
 } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/Colors';
 import { Post } from '../../../types/Post';
-import ButtonLike from './buttonLike';
 import ThemedText from '@/components/ui/ThemedText';
+import CommentModal from './CommentModal';
 
 type PostFeedProps = {
   posts: Post[];
   onToggleLike: (id: string) => void;
-  onOpenComments: (postId: string) => void;
 };
+
+type LikeButtonProps = {
+  liked: boolean;
+  likes: number;
+  onToggle: () => void;
+};
+
+function LikeButton({ liked, likes, onToggle }: LikeButtonProps) {
+  const colorScheme = useColorScheme();
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      style={({ pressed }) => [
+        styles.iconWrapper,
+        { transform: [{ scale: pressed ? 0.95 : 1 }] },
+      ]}
+    >
+      <Ionicons
+        name={liked ? 'heart' : 'heart-outline'}
+        size={22}
+        color={liked ? 'tomato' : Colors[colorScheme ?? 'light'].text}
+      />
+      <ThemedText
+        style={[
+          styles.likeCount,
+          { color: Colors[colorScheme ?? 'light'].text },
+        ]}
+      >
+        {likes}
+      </ThemedText>
+    </Pressable>
+  );
+}
 
 export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
   const colorScheme = useColorScheme();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<{
+    [postId: string]: 'map' | 'image';
+  }>({});
+
+  const openComments = (postId: string) => {
+    setSelectedPostId(postId);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedPostId(null);
+  };
+
+  const toggleView = (postId: string) => {
+    setViewMode(prev => ({
+      ...prev,
+      [postId]: prev[postId] === 'map' ? 'image' : 'map',
+    }));
+  };
 
   return (
     <View style={styles.postsContainer}>
@@ -40,7 +95,39 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
             </ThemedText>
           </View>
 
-          {post.route && post.route.length > 1 ? (
+          {post.route && post.image ? (
+            viewMode[post.id] === 'image' ? (
+              <Image source={{ uri: post.image }} style={styles.postImage} />
+            ) : (
+              <MapView
+                style={styles.postImage}
+                initialRegion={{
+                  latitude: post.route[0].latitude,
+                  longitude: post.route[0].longitude,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+                scrollEnabled={true}
+                zoomEnabled={true}
+              >
+                <Polyline
+                  coordinates={post.route}
+                  strokeColor="#007AFF"
+                  strokeWidth={4}
+                />
+                <Marker
+                  coordinate={post.route[0]}
+                  title="Inicio"
+                  pinColor="green"
+                />
+                <Marker
+                  coordinate={post.route[post.route.length - 1]}
+                  title="Fin"
+                  pinColor="red"
+                />
+              </MapView>
+            )
+          ) : post.route && post.route.length > 1 ? (
             <MapView
               style={styles.postImage}
               initialRegion={{
@@ -73,17 +160,43 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
           )}
 
           <View style={styles.postActions}>
-            <ButtonLike
+            <LikeButton
               liked={post.liked ?? false}
               likes={post.likes}
               onToggle={() => onToggleLike(post.id)}
             />
-            <Pressable onPress={() => console.log('Comentar')}>
-              <ThemedText style={styles.icon}>💬</ThemedText>
+
+            <Pressable
+              onPress={() => openComments(post.id)}
+              style={styles.iconWrapper}
+            >
+              <Ionicons
+                name="chatbubbles-outline"
+                size={22}
+                color={Colors[colorScheme ?? 'light'].text}
+              />
+              <ThemedText
+                style={[
+                  styles.commentCount,
+                  { color: Colors[colorScheme ?? 'light'].text },
+                ]}
+              >
+                {post.comments?.length ?? 0}
+              </ThemedText>
             </Pressable>
-            <Pressable onPress={() => console.log('Compartir')}>
-              <ThemedText style={styles.icon}>✈️</ThemedText>
-            </Pressable>
+
+            {post.route && post.image && (
+              <Pressable
+                onPress={() => toggleView(post.id)}
+                style={styles.iconWrapper}
+              >
+                <Ionicons
+                  name="location-outline"
+                  size={22}
+                  color={Colors[colorScheme ?? 'light'].text}
+                />
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.postCaption}>
@@ -94,6 +207,14 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
           </View>
         </View>
       ))}
+
+      {selectedPostId && (
+        <CommentModal
+          visible={modalVisible}
+          onClose={closeModal}
+          postId={selectedPostId}
+        />
+      )}
     </View>
   );
 }
@@ -120,12 +241,25 @@ const styles = StyleSheet.create({
   postImage: { width: '100%', height: 300 },
   postActions: {
     flexDirection: 'row',
-    padding: 10,
+    alignItems: 'center',
+    padding: 13,
   },
   postCaption: {
     paddingHorizontal: 10,
     paddingBottom: 5,
     flexDirection: 'column',
   },
-  icon: { fontSize: 20, marginRight: 15 },
+  iconWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  likeCount: {
+    marginLeft: 4,
+    fontSize: 16,
+  },
+  commentCount: {
+    marginLeft: 4,
+    fontSize: 16,
+  },
 });
