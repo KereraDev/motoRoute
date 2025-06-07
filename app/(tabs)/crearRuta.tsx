@@ -34,9 +34,6 @@ export default function Anadir() {
   const [text, setText] = useState('');
   const [destino, setDestino] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
-  const [markerDestino, setMarkerDestino] = useState<LocationCoords | null>(
-    null
-  );
   const [rutaRecorrida, setRutaRecorrida] = useState<LocationCoords[]>([]);
   const [seguimientoActivo, setSeguimientoActivo] = useState(false);
 
@@ -57,15 +54,15 @@ export default function Anadir() {
 
   const handlePost = () => {
     const missingFields = [];
-    if (!text.trim()) missingFields.push('Descripción');
-    if (rutaRecorrida.length < 2) missingFields.push('Ruta trazada');
-    if (!destino.trim()) missingFields.push('Destino');
     if (!imageUri) missingFields.push('Imagen');
+    if (!destino.trim()) missingFields.push('Título');
+    if (!text.trim()) missingFields.push('Descripción');
+    if (rutaRecorrida.length < 2) missingFields.push('Ruta Recorrida');
 
     if (missingFields.length > 0) {
       Alert.alert(
-        'Campos faltantes',
-        `Por favor completa los siguientes campos:\n- ${missingFields.join('\n- ')}`
+        'Error',
+        `Completa los siguientes campos:\n- ${missingFields.join('\n- ')}`
       );
       return;
     }
@@ -81,34 +78,9 @@ export default function Anadir() {
     setText('');
     setDestino('');
     setImageUri(undefined);
-    setMarkerDestino(null);
     setRutaRecorrida([]);
     detenerSeguimiento();
-
-    Alert.alert('Éxito', '✅ Ruta publicada con éxito');
-    router.replace('/home');
-  };
-  const geocodeDestino = async () => {
-    if (!destino.trim()) return;
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}&limit=1`,
-        { headers: { 'User-Agent': 'MiAppReactNative/1.0' } }
-      );
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setMarkerDestino({
-          latitude: parseFloat(lat),
-          longitude: parseFloat(lon),
-        });
-      } else {
-        Alert.alert('No encontrado', 'No se encontró la dirección ingresada.');
-      }
-    } catch (error) {
-      console.error('Error geocodificando destino:', error);
-      Alert.alert('Error', 'No se pudo buscar la dirección.');
-    }
+    router.replace('/main');
   };
 
   const comenzarSeguimiento = async () => {
@@ -137,13 +109,6 @@ export default function Anadir() {
     );
 
     seguimientoRef.current = sub;
-
-    setTimeout(
-      () => {
-        if (seguimientoRef.current) detenerSeguimiento();
-      },
-      10 * 60 * 1000
-    );
   };
 
   const detenerSeguimiento = () => {
@@ -193,7 +158,6 @@ export default function Anadir() {
                 color: isDark ? '#fff' : '#000',
               },
             ]}
-            onBlur={geocodeDestino}
           />
 
           <TextInput
@@ -237,14 +201,8 @@ export default function Anadir() {
             <MapView
               style={styles.map}
               region={{
-                latitude:
-                  rutaRecorrida.at(-1)?.latitude ??
-                  markerDestino?.latitude ??
-                  -33.4489,
-                longitude:
-                  rutaRecorrida.at(-1)?.longitude ??
-                  markerDestino?.longitude ??
-                  -70.6693,
+                latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
+                longitude: rutaRecorrida.at(-1)?.longitude ?? -70.6693,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
@@ -254,13 +212,6 @@ export default function Anadir() {
                   coordinate={rutaRecorrida[0]}
                   title="Inicio"
                   pinColor="green"
-                />
-              )}
-              {markerDestino && (
-                <Marker
-                  coordinate={markerDestino}
-                  title="Destino"
-                  pinColor="red"
                 />
               )}
               {rutaRecorrida.length > 1 && (

@@ -1,12 +1,17 @@
+// app/(tabs)/_layout.tsx
+
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useColorScheme } from '../../hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useTabIndexStore } from '@/store/tabIndexStore';
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { index, setIndex } = useTabIndexStore();
 
   return (
     <SafeAreaProvider>
@@ -23,12 +28,30 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen
-          name="home"
+          name="main"
           options={{
             title: '',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" color={color} size={size} />
             ),
+            tabBarButton: props => (
+              <TouchableOpacity
+                onPress={e => {
+                  if (index === 1) setIndex(0);
+                  props.onPress?.(e);
+                }}
+                activeOpacity={0.8}
+                style={props.style}
+              >
+                {props.children}
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="home"
+          options={{
+            href: null,
           }}
         />
         <Tabs.Screen
@@ -40,6 +63,7 @@ export default function TabLayout() {
             ),
           }}
         />
+
         <Tabs.Screen
           name="crearRuta"
           options={{
@@ -49,6 +73,7 @@ export default function TabLayout() {
             ),
           }}
         />
+
         <Tabs.Screen
           name="perfil"
           options={{

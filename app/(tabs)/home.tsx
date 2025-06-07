@@ -1,3 +1,5 @@
+// app/home.tsx
+
 import Header from '@/components/Home/Header/Header';
 import PostFeed from '@/components/Home/PostFeed/PostFeed';
 import { usePostStore } from '@/store/postStore';
@@ -23,7 +25,11 @@ export default function HomeScreen() {
     >
       <Header />
 
-      <ScrollView style={styles.mainScroll}>
+      <ScrollView
+        style={styles.mainScroll}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
         <View style={styles.separator} />
         <PostFeed posts={posts} onToggleLike={toggleLike} />
       </ScrollView>

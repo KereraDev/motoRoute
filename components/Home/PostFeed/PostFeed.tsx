@@ -96,9 +96,7 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
           </View>
 
           {post.route && post.image ? (
-            viewMode[post.id] === 'image' ? (
-              <Image source={{ uri: post.image }} style={styles.postImage} />
-            ) : (
+            viewMode[post.id] === 'map' ? (
               <MapView
                 style={styles.postImage}
                 initialRegion={{
@@ -126,6 +124,8 @@ export default function PostFeed({ posts, onToggleLike }: PostFeedProps) {
                   pinColor="red"
                 />
               </MapView>
+            ) : (
+              <Image source={{ uri: post.image }} style={styles.postImage} />
             )
           ) : post.route && post.route.length > 1 ? (
             <MapView

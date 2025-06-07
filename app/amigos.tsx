@@ -9,6 +9,8 @@ import {
   TextInput,
   useColorScheme,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useTabIndexStore } from '@/store/tabIndexStore';
 
 const dummyChats = [
   {
@@ -97,14 +99,22 @@ export default function AmigosScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
-
-  const handleChatPress = (chatId: string) => {
-    console.log('Abrir chat con:', chatId);
-  };
+  const router = useRouter(); // ✅ Importante
 
   const filteredChats = dummyChats.filter(chat =>
     chat.user.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleChatPress = (chat: (typeof dummyChats)[0]) => {
+    router.push({
+      pathname: '/amigos/[id]',
+      params: {
+        id: chat.id,
+        name: chat.user.name,
+        avatar: chat.user.avatar,
+      },
+    });
+  };
 
   return (
     <View
@@ -124,7 +134,11 @@ export default function AmigosScreen() {
         ]}
       />
 
-      <ScrollView style={styles.chatList}>
+      <ScrollView
+        style={styles.chatList}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
         {filteredChats.map(chat => (
           <TouchableOpacity
             key={chat.id}
@@ -132,7 +146,7 @@ export default function AmigosScreen() {
               styles.chatItem,
               { borderBottomColor: isDark ? '#333' : '#eee' },
             ]}
-            onPress={() => handleChatPress(chat.id)}
+            onPress={() => handleChatPress(chat)}
           >
             <Image
               source={{ uri: chat.user.avatar }}

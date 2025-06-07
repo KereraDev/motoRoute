@@ -1,16 +1,14 @@
 import ThemedText from '@/components/ui/ThemedText';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useColorScheme } from '../../../hooks/useColorScheme';
-
+import { useTabIndexStore } from '@/store/tabIndexStore';
 export default function Header() {
   const colorScheme = useColorScheme();
   const { user } = useUserStore();
-  const router = useRouter();
-
+  const setIndex = useTabIndexStore(state => state.setIndex);
   return (
     <View style={styles.header}>
       <Image source={{ uri: user.avatar }} style={styles.avatar} />
@@ -25,7 +23,7 @@ export default function Header() {
       </ThemedText>
 
       <Pressable
-        onPress={() => router.push('/amigos')}
+        onPress={() => setIndex(1)}
         style={({ hovered, pressed }) => [
           styles.iconButton,
           (hovered || pressed) && styles.iconButtonHover,

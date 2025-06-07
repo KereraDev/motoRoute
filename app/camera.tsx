@@ -11,6 +11,7 @@ import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import type { CameraView as CameraViewType } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useCameraStore } from '@/store/cameraStore';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -60,12 +61,15 @@ export default function CameraScreen() {
           <View style={styles.buttonRow}>
             <TouchableOpacity
               onPress={handleRetake}
-              style={styles.retakeButton}
+              style={styles.iconCircleRed}
             >
-              <Text style={styles.retakeText}>🔁 Reintentar</Text>
+              <Ionicons name="close" size={28} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleUsePhoto} style={styles.useButton}>
-              <Text style={styles.useText}>✅ Usar Foto</Text>
+            <TouchableOpacity
+              onPress={handleUsePhoto}
+              style={styles.iconCircleBlue}
+            >
+              <Ionicons name="checkmark" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -73,10 +77,10 @@ export default function CameraScreen() {
         <CameraView style={styles.camera} ref={cameraRef} facing={facing}>
           <View style={styles.controls}>
             <TouchableOpacity onPress={takePhoto} style={styles.captureButton}>
-              <Text style={styles.buttonText}>📸</Text>
+              <Ionicons name="camera" size={24} color="#000" />
             </TouchableOpacity>
             <TouchableOpacity onPress={toggleCamera} style={styles.flipButton}>
-              <Text style={styles.flipText}>🔄</Text>
+              <Ionicons name="camera-reverse" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
         </CameraView>
@@ -102,31 +106,33 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 50,
   },
-  buttonText: { fontSize: 18 },
   flipButton: {
     backgroundColor: '#2196F3',
     padding: 14,
     borderRadius: 50,
   },
-  flipText: { color: '#fff', fontSize: 18 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 20,
     backgroundColor: '#000',
   },
-  retakeButton: {
-    backgroundColor: '#ccc',
-    padding: 12,
-    borderRadius: 8,
+  iconCircleRed: {
+    backgroundColor: '#dc3545',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  useButton: {
-    backgroundColor: '#28a745',
-    padding: 12,
-    borderRadius: 8,
+  iconCircleBlue: {
+    backgroundColor: '#007bff',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  retakeText: { color: '#000', fontSize: 16 },
-  useText: { color: '#fff', fontSize: 16 },
   text: {
     color: '#000',
     fontSize: 16,
