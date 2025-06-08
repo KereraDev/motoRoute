@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 20,
     marginRight: 8,
   },
   sendButton: {
     justifyContent: 'center',
     paddingHorizontal: 12,
-    backgroundColor: '#2196F3',
-    borderRadius: 10,
+    backgroundColor: '#008000',
+    borderRadius: 20,
   },
   sendText: {
     color: '#fff',

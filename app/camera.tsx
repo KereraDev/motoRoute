@@ -41,7 +41,7 @@ export default function CameraScreen() {
   const handleUsePhoto = () => {
     if (previewUri) {
       setPhotoUri(previewUri);
-      router.replace('/crearRuta');
+      router.back();
     }
   };
 

@@ -103,7 +103,7 @@ export default function AmigoChatScreen() {
           styles.messageContainer,
           isMe ? styles.messageRight : styles.messageLeft,
           {
-            backgroundColor: isMe ? '#007bff' : isDark ? '#333' : '#e0e0e0',
+            backgroundColor: isMe ? '#008000' : isDark ? '#333' : '#e0e0e0',
           },
         ]}
       >
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   sendButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#008000',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,

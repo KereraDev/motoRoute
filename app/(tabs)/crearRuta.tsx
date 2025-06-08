@@ -3,7 +3,6 @@ import {
   Alert,
   Image,
   Keyboard,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -128,7 +127,7 @@ export default function Anadir() {
         ]}
         edges={['top']}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
           <View style={styles.headerContainer}>
             <Text style={[styles.header, { color: isDark ? '#fff' : '#000' }]}>
               Crear Ruta
@@ -177,77 +176,75 @@ export default function Anadir() {
           />
 
           <TouchableOpacity
-            style={[
-              styles.locationButton,
-              { backgroundColor: isDark ? '#008000' : '#008000' },
-            ]}
+            style={[styles.locationButton, { backgroundColor: '#008000' }]}
             onPress={
               seguimientoActivo ? detenerSeguimiento : comenzarSeguimiento
             }
           >
-            <Text
-              style={[
-                styles.locationButtonText,
-                { color: isDark ? '#fff' : '#333' },
-              ]}
-            >
-              {seguimientoActivo
-                ? '🛑 Detener seguimiento'
-                : '📌 Iniciar ruta con mi movimiento'}
+            <Text style={[styles.locationButtonText, { color: '#fff' }]}>
+              {seguimientoActivo ? '🛑 Detener seguimiento' : '📌 Grabar ruta'}
             </Text>
           </TouchableOpacity>
+        </View>
 
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              region={{
-                latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
-                longitude: rutaRecorrida.at(-1)?.longitude ?? -70.6693,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-            >
-              {rutaRecorrida.length > 0 && (
-                <Marker
-                  coordinate={rutaRecorrida[0]}
-                  title="Inicio"
-                  pinColor="green"
-                />
-              )}
-              {rutaRecorrida.length > 1 && (
-                <Polyline
-                  coordinates={rutaRecorrida}
-                  strokeColor="#28a745"
-                  strokeWidth={4}
-                />
-              )}
-            </MapView>
-          </View>
+        <View style={styles.mapContainer}>
+          <MapView
+            style={styles.map}
+            region={{
+              latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
+              longitude: rutaRecorrida.at(-1)?.longitude ?? -70.6693,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+          >
+            {rutaRecorrida.length > 0 && (
+              <Marker
+                coordinate={rutaRecorrida[0]}
+                title="Inicio"
+                pinColor="green"
+              />
+            )}
+            {rutaRecorrida.length > 1 && (
+              <Polyline
+                coordinates={rutaRecorrida}
+                strokeColor="#28a745"
+                strokeWidth={4}
+              />
+            )}
+          </MapView>
+        </View>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.publish]}
-              onPress={handlePost}
-            >
-              <Text style={styles.buttonText}>Publicar ruta</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.publish]}
+            onPress={handlePost}
+          >
+            <Text style={styles.buttonText}>Publicar ruta</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, flex: 1 },
-  scrollContent: { paddingBottom: 40 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  header: { fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   input: {
     borderColor: '#ccc',
     borderWidth: 1,
@@ -255,41 +252,53 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-  textarea: { height: 100, textAlignVertical: 'top' },
+  textarea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
   imagePicker: {
     height: 60,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: { width: 60, height: 60, borderRadius: 12 },
+  image: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+  },
   locationButton: {
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
     alignItems: 'center',
   },
-  locationButtonText: { fontWeight: 'bold' },
+  locationButtonText: {
+    fontWeight: 'bold',
+  },
   mapContainer: {
-    height: 200,
-    marginBottom: 12,
+    flex: 1,
+    marginHorizontal: 16,
     borderRadius: 10,
     overflow: 'hidden',
+    marginBottom: 12,
   },
-  map: { flex: 1, width: '100%', height: '100%' },
+  map: {
+    flex: 1,
+    width: '100%',
+  },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   button: {
-    flex: 1,
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    marginHorizontal: 4,
   },
-  publish: { backgroundColor: '#008000' },
+  publish: {
+    backgroundColor: '#008000',
+  },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
