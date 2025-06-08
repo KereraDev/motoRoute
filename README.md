@@ -37,9 +37,9 @@
 
 ## 🧑‍💻 Autores
 
-Mario Navarro Allende  
+Mario Navarro Allende  | Bastian Alvedo
 📫 [github.com/KereraDev](https://github.com/KereraDev)  
 📧 mario.n.navarro@live.com  
 📍 Santiago, Chile
 """
-Bastian Alvedo
+
