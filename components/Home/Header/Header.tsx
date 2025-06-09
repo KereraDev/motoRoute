@@ -5,13 +5,19 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useColorScheme } from '../../../hooks/useColorScheme';
 import { useTabIndexStore } from '@/store/tabIndexStore';
+
+// Importa el logo desde assets (fuera de /app)
+const logo = require('../../../assets/images/logo.png');
+
 export default function Header() {
   const colorScheme = useColorScheme();
   const { user } = useUserStore();
   const setIndex = useTabIndexStore(state => state.setIndex);
+
   return (
     <View style={styles.header}>
-      <Image source={{ uri: user.avatar }} style={styles.avatar} />
+      {/* Logo en vez del avatar */}
+      <Image source={logo} style={styles.logo} />
 
       <ThemedText
         style={[
@@ -54,11 +60,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 12,
   },
-  avatar: {
+  logo: {
     width: 50,
     height: 50,
-    borderRadius: 40,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
   },
   iconButton: {
     padding: 8,

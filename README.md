@@ -1,50 +1,63 @@
-# Welcome to your Expo app 👋
+from pathlib import Path
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Contenido del README
+readme_content = """
+# 🏍️ MotoRoutes
 
-## Get started
+**MotoRoutes** es una aplicación móvil desarrollada con React Native y Expo, pensada para motociclistas que desean registrar, visualizar y compartir sus rutas de viaje de manera simple e intuitiva.
 
-1. Install dependencies
+## 🚀 Funcionalidades
 
-   ```bash
-   npm install
-   ```
+- 📍 Registro de rutas con geolocalización en tiempo real
+- 🖼️ Creación de publicaciones con imagen, título y descripción
+- 📚 Historias tipo Instagram (una o varias por usuario)
+- 💬 Comentarios en publicaciones (modal estilo TikTok)
+- 🌙 Modo claro/oscuro automático
+- 🧠 Almacenamiento local de imágenes
+- 🧭 Navegación con pestañas (home, historias, añadir, amigos, perfil)
 
-2. Start the app
+## 🛠️ Tecnologías
 
-   ```bash
-   npx expo start
-   ```
+- **React Native** con **Expo**
+- **TypeScript**
+- **Zustand** para manejo de estado
+- **React Navigation**
+- **react-native-maps** y **expo-location**
 
-In the output, you'll find options to open the app in a
+## 📂 Estructura del proyecto
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+/app
+/components
+/screens
+/store ← Zustand stores
+/types
+...
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+## 🔄 En desarrollo
 
-When you're ready, run:
+- 🧑‍💼 Pantalla de perfil de usuario
 
-```bash
-npm run reset-project
-```
+## 📸 Capturas
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+*(Aquí puedes agregar imágenes si deseas mostrar UI de la app)*
 
-## Learn more
+## 📌 Notas
 
-To learn more about developing your project with Expo, look at the following resources:
+- No se requiere autenticación
+- No tiene backend
+- No está desplegada (solo entorno local)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 🧑‍💻 Autor
 
-## Join the community
+Mario Navarro Allende  
+📫 [github.com/KereraDev](https://github.com/KereraDev)  
+📧 marion.n.navarro@live.com  
+📍 Santiago, Chile
+"""
 
-Join our community of developers creating universal apps.
+# Guardar el archivo como README.md
+readme_path = Path("/mnt/data/README_MotoRoutes.md")
+readme_path.write_text(readme_content.strip(), encoding="utf-8")
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+readme_path.name
