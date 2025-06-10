@@ -1,7 +1,3 @@
-from pathlib import Path
-
-# Contenido del README
-readme_content = """
 # 🏍️ MotoRoutes
 
 **MotoRoutes** es una aplicación móvil desarrollada con React Native y Expo, pensada para motociclistas que desean registrar, visualizar y compartir sus rutas de viaje de manera simple e intuitiva.
@@ -50,14 +46,10 @@ readme_content = """
 
 ## 🧑‍💻 Autor
 
-Mario Navarro Allende  
+Mario Navarro Allende  | Bastian Alvear
 📫 [github.com/KereraDev](https://github.com/KereraDev)  
 📧 marion.n.navarro@live.com  
 📍 Santiago, Chile
 """
-
-# Guardar el archivo como README.md
-readme_path = Path("/mnt/data/README_MotoRoutes.md")
-readme_path.write_text(readme_content.strip(), encoding="utf-8")
 
 readme_path.name
