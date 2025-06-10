@@ -1,3 +1,4 @@
+import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   DarkTheme,
   DefaultTheme,
@@ -6,13 +7,11 @@ import {
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'react-native';
 import { useEffect } from 'react';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,6 +49,7 @@ export default function RootLayout() {
                 animation: 'slide_from_right',
               }}
             >
+              <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="amigos" options={{ headerShown: false }} />
               <Stack.Screen name="camera" options={{ headerShown: false }} />
