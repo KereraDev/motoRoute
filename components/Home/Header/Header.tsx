@@ -6,8 +6,9 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useColorScheme } from '../../../hooks/useColorScheme';
 import { useTabIndexStore } from '@/store/tabIndexStore';
 
-// Importa el logo desde assets (fuera de /app)
-const logo = require('../../../assets/images/logo.png');
+// Importa ambas versiones del logo
+const logoLight = require('../../../assets/images/logo-dark.png'); // para fondo oscuro
+const logoDark = require('../../../assets/images/logo-light.png');
 
 export default function Header() {
   const colorScheme = useColorScheme();
@@ -16,8 +17,11 @@ export default function Header() {
 
   return (
     <View style={styles.header}>
-      {/* Logo en vez del avatar */}
-      <Image source={logo} style={styles.logo} />
+      {/* Logo que cambia según el modo */}
+      <Image
+        source={colorScheme === 'dark' ? logoLight : logoDark}
+        style={styles.logo}
+      />
 
       <ThemedText
         style={[
