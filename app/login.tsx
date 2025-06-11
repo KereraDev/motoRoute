@@ -130,8 +130,6 @@ export default function LoginScreen() {
         await AsyncStorage.removeItem('savedEmail');
         await AsyncStorage.removeItem('savedPassword');
       }
-
-      router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
     } finally {

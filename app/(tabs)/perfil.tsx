@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,7 +21,6 @@ export default function PerfilScreen() {
   const handleLogout = async () => {
     try {
       await auth().signOut();
-      router.replace('/login');
     } catch (e) {
       console.error('Error al cerrar sesión:', e);
     }
