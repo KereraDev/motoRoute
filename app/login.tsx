@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
 export default function LoginScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -40,11 +41,12 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const logoLight = require('../assets/images/logo-dark.png'); // fondo oscuro = logo claro
+  const logoLight = require('../assets/images/logo-dark.png');
   const logoDark = require('../assets/images/logo-light.png');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  // Animaciones
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -73,7 +75,8 @@ export default function LoginScreen() {
     loadRemembered();
   }, []);
 
-  const showError = error => {
+  // Mostrar errores amigables
+  const showError = (error: any) => {
     let mensaje = 'Ocurrió un error.';
     if (error && typeof error.code === 'string') {
       switch (error.code) {
@@ -108,24 +111,18 @@ export default function LoginScreen() {
     } else {
       mensaje = 'Error inesperado. Verifica los datos ingresados.';
     }
-
     Alert.alert('Error', mensaje);
   };
 
+  // Login
   const handleLogin = async () => {
-    if (!email.trim()) {
-      Alert.alert('Validación', 'Debes ingresar un correo electrónico.');
-      return;
-    }
-    if (!password.trim()) {
-      Alert.alert('Validación', 'Debes ingresar una contraseña.');
-      return;
-    }
-
+    if (!email.trim())
+      return Alert.alert('Validación', 'Debes ingresar un correo electrónico.');
+    if (!password.trim())
+      return Alert.alert('Validación', 'Debes ingresar una contraseña.');
     setLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email, password);
-
       if (rememberMe) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
@@ -133,6 +130,7 @@ export default function LoginScreen() {
         await AsyncStorage.removeItem('savedEmail');
         await AsyncStorage.removeItem('savedPassword');
       }
+      router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
     } finally {
@@ -140,52 +138,32 @@ export default function LoginScreen() {
     }
   };
 
+  // Registro
   const handleRegister = async () => {
     const nombreValido =
       name &&
       name.trim().length >= 3 &&
       /^[a-zA-Z\s]+$/.test(name) &&
       !/^([a-zA-Z])\1{1,}$/.test(name.trim());
-
-    if (!nombreValido) {
-      Alert.alert('Nombre inválido', 'Ingresa un nombre real.');
-      return;
-    }
-
-    if (!gender) {
-      Alert.alert('Campo requerido', 'Selecciona un sexo.');
-      return;
-    }
-
-    if (!birthDate) {
-      Alert.alert('Campo requerido', 'Selecciona tu fecha de nacimiento.');
-      return;
-    }
-
+    if (!nombreValido)
+      return Alert.alert('Nombre inválido', 'Ingresa un nombre real.');
+    if (!gender) return Alert.alert('Campo requerido', 'Selecciona un sexo.');
+    if (!birthDate)
+      return Alert.alert(
+        'Campo requerido',
+        'Selecciona tu fecha de nacimiento.'
+      );
     const hoy = new Date();
     const minimo = new Date(1900, 0, 1);
-    if (birthDate > hoy || birthDate < minimo) {
-      Alert.alert('Fecha inválida', 'Selecciona una fecha válida.');
-      return;
-    }
-    if (!city) {
-      Alert.alert('Campo requerido', 'Selecciona una ciudad.');
-      return;
-    }
-    if (!email.trim()) {
-      Alert.alert('Campo requerido', 'Debes ingresar un correo.');
-      return;
-    }
-
-    if (!password.trim()) {
-      Alert.alert('Campo requerido', 'Debes ingresar una contraseña.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden.');
-      return;
-    }
+    if (birthDate > hoy || birthDate < minimo)
+      return Alert.alert('Fecha inválida', 'Selecciona una fecha válida.');
+    if (!city) return Alert.alert('Campo requerido', 'Selecciona una ciudad.');
+    if (!email.trim())
+      return Alert.alert('Campo requerido', 'Debes ingresar un correo.');
+    if (!password.trim())
+      return Alert.alert('Campo requerido', 'Debes ingresar una contraseña.');
+    if (password !== confirmPassword)
+      return Alert.alert('Error', 'Las contraseñas no coinciden.');
 
     setLoading(true);
     try {
@@ -194,30 +172,22 @@ export default function LoginScreen() {
         password
       );
       const uid = credenciales.user.uid;
-
-      try {
-        await firestore()
-          .collection('usuarios')
-          .doc(uid)
-          .set({
-            uidInterno: 'uid001', // valor fijo por ahora
-            nombreVisible: name.trim(),
-            correo: email.trim(),
-            ciudad: city,
-            rol: ['usuario'],
-            biografia: '',
-            fotoPerfilURL: 'fotoPerfil',
-            fechaNacimiento: birthDate,
-            fechaCreacion: firestore.FieldValue.serverTimestamp(),
-            amigos: [],
-            rutasCompletadas: [],
-          });
-      } catch (firestoreError) {
-        console.error('Error al guardar en Firestore:', firestoreError);
-        Alert.alert('Error', 'Error al guardar los datos del usuario.');
-        return;
-      }
-
+      await firestore()
+        .collection('usuarios')
+        .doc(uid)
+        .set({
+          uidInterno: 'uid001',
+          nombreVisible: name.trim(),
+          correo: email.trim(),
+          ciudad: city,
+          rol: ['usuario'],
+          biografia: '',
+          fotoPerfilURL: 'fotoPerfil',
+          fechaNacimiento: birthDate,
+          fechaCreacion: firestore.FieldValue.serverTimestamp(),
+          amigos: [],
+          rutasCompletadas: [],
+        });
       Alert.alert('Éxito', 'Cuenta creada correctamente.');
       router.replace('/(tabs)/main');
     } catch (error) {
@@ -262,7 +232,6 @@ export default function LoginScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
             />
-
             <View style={styles.passwordContainer}>
               <ThemedInput
                 style={styles.passwordInput}
@@ -277,8 +246,6 @@ export default function LoginScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-
-            {/* Recuérdame */}
             <TouchableOpacity
               style={styles.rememberMe}
               onPress={() => setRememberMe(!rememberMe)}
@@ -287,7 +254,6 @@ export default function LoginScreen() {
                 {rememberMe ? '✅' : '⬜'} Recuérdame
               </ThemedText>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.button, loading && { opacity: 0.5 }]}
               onPress={handleLogin}
@@ -352,7 +318,6 @@ export default function LoginScreen() {
                   : 'Fecha de nacimiento'}
               </ThemedText>
             </TouchableOpacity>
-
             {showDatePicker && (
               <DateTimePicker
                 value={birthDate || new Date(2000, 0, 1)}
@@ -360,15 +325,12 @@ export default function LoginScreen() {
                 display="spinner"
                 onChange={(event, date) => {
                   setShowDatePicker(false);
-                  if (event.type !== 'dismissed' && date) {
-                    setBirthDate(date);
-                  }
+                  if (event.type !== 'dismissed' && date) setBirthDate(date);
                 }}
                 minimumDate={new Date(1900, 0, 1)}
-                maximumDate={new Date()} // evita fechas futuras
+                maximumDate={new Date()}
               />
             )}
-
             <View
               style={[
                 styles.pickerContainer,
@@ -398,7 +360,6 @@ export default function LoginScreen() {
                 ))}
               </Picker>
             </View>
-
             <ThemedInput
               style={styles.input}
               placeholder="Correo electrónico"
@@ -471,7 +432,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     marginBottom: 12,
   },
-
   fullContainer: {
     flex: 1,
     justifyContent: 'center',
