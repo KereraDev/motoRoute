@@ -1,10 +1,10 @@
 import ThemedText from '@/components/ui/ThemedText';
+import { useTabIndexStore } from '@/store/tabIndexStore';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useColorScheme } from '../../../hooks/useColorScheme';
-import { useTabIndexStore } from '@/store/tabIndexStore';
 
 // Importa ambas versiones del logo
 const logoLight = require('../../../assets/images/logo-dark.png'); // para fondo oscuro

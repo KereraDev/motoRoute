@@ -1,18 +1,31 @@
+import { useUserStore } from '@/store/userStore';
+import auth from '@react-native-firebase/auth';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
+  TouchableOpacity,
+  useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserStore } from '@/store/userStore';
 
 export default function PerfilScreen() {
   const { user } = useUserStore();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await auth().signOut();
+      router.replace('/login');
+    } catch (e) {
+      console.error('Error al cerrar sesión:', e);
+    }
+  };
 
   return (
     <SafeAreaView
@@ -38,6 +51,11 @@ export default function PerfilScreen() {
         <Text style={[styles.text, { color: isDark ? '#ddd' : '#333' }]}>
           12 rutas compartidas
         </Text>
+
+        {/* Botón de Cerrar sesión */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -70,5 +88,17 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 15,
+  },
+  logoutButton: {
+    marginTop: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#ff4d4d',
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

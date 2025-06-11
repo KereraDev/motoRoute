@@ -1,3 +1,8 @@
+import ThemedInput from '@/components/ui/ThemedInput';
+import ThemedText from '@/components/ui/ThemedText';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import auth from '@react-native-firebase/auth';
 import { Picker } from '@react-native-picker/picker';
@@ -7,31 +12,33 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
 export default function LoginScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
-  const [birthDate, setBirthDate] = useState(undefined);
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const logoLight = require('../assets/images/logo-dark.png'); // fondo oscuro = logo claro
+  const logoDark = require('../assets/images/logo-light.png');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -51,9 +58,20 @@ export default function LoginScreen() {
     }).start();
   }, [isRegistering]);
 
+  // Cargar credenciales guardadas
+  useEffect(() => {
+    const loadRemembered = async () => {
+      const savedEmail = await AsyncStorage.getItem('savedEmail');
+      const savedPassword = await AsyncStorage.getItem('savedPassword');
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+      if (savedEmail || savedPassword) setRememberMe(true);
+    };
+    loadRemembered();
+  }, []);
+
   const showError = error => {
     let mensaje = 'Ocurrió un error.';
-
     if (error && typeof error.code === 'string') {
       switch (error.code) {
         case 'auth/invalid-email':
@@ -62,6 +80,7 @@ export default function LoginScreen() {
         case 'auth/user-not-found':
           mensaje = 'No existe una cuenta con este correo.';
           break;
+        case 'auth/invalid-credential':
         case 'auth/wrong-password':
           mensaje = 'La contraseña es incorrecta.';
           break;
@@ -103,6 +122,15 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email, password);
+
+      if (rememberMe) {
+        await AsyncStorage.setItem('savedEmail', email);
+        await AsyncStorage.setItem('savedPassword', password);
+      } else {
+        await AsyncStorage.removeItem('savedEmail');
+        await AsyncStorage.removeItem('savedPassword');
+      }
+
       router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
@@ -112,7 +140,6 @@ export default function LoginScreen() {
   };
 
   const handleRegister = async () => {
-    // Validación de nombre realista
     const nombreValido =
       name &&
       name.trim().length >= 3 &&
@@ -130,26 +157,19 @@ export default function LoginScreen() {
     }
 
     if (!birthDate) {
-      Alert.alert(
-        'Campo requerido',
-        'Debes seleccionar tu fecha de nacimiento.'
-      );
+      Alert.alert('Campo requerido', 'Selecciona tu fecha de nacimiento.');
       return;
     }
 
-    // Validación de rango de fecha realista
     const hoy = new Date();
-    const minimo = new Date(1900, 0, 1); // 1 enero 1900
+    const minimo = new Date(1900, 0, 1);
     if (birthDate > hoy || birthDate < minimo) {
-      Alert.alert(
-        'Fecha inválida',
-        'Selecciona una fecha de nacimiento válida.'
-      );
+      Alert.alert('Fecha inválida', 'Selecciona una fecha válida.');
       return;
     }
 
     if (!email.trim()) {
-      Alert.alert('Campo requerido', 'Debes ingresar un correo electrónico.');
+      Alert.alert('Campo requerido', 'Debes ingresar un correo.');
       return;
     }
 
@@ -177,14 +197,19 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.fullContainer}
+      style={[
+        styles.fullContainer,
+        { backgroundColor: colorScheme === 'dark' ? '#121212' : '#ffffff' },
+      ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Animated.View
         style={{ opacity: fadeAnim, alignItems: 'center', marginBottom: 24 }}
       >
-        <Text style={styles.emoji}>🏍️</Text>
-        <Text style={styles.title}>MotoRoute</Text>
+        <Image
+          source={colorScheme === 'dark' ? logoLight : logoDark}
+          style={styles.logo}
+        />
       </Animated.View>
 
       <View style={{ overflow: 'hidden', width: SCREEN_WIDTH }}>
@@ -192,15 +217,12 @@ export default function LoginScreen() {
           style={{
             flexDirection: 'row',
             width: SCREEN_WIDTH * 2,
-            transform: [
-              {
-                translateX: slideAnim,
-              },
-            ],
+            transform: [{ translateX: slideAnim }],
           }}
         >
+          {/* LOGIN */}
           <View style={styles.formPage}>
-            <TextInput
+            <ThemedInput
               style={styles.input}
               placeholder="Correo electrónico"
               value={email}
@@ -208,8 +230,9 @@ export default function LoginScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
             />
+
             <View style={styles.passwordContainer}>
-              <TextInput
+              <ThemedInput
                 style={styles.passwordInput}
                 placeholder="Contraseña"
                 value={password}
@@ -222,6 +245,17 @@ export default function LoginScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Recuérdame */}
+            <TouchableOpacity
+              style={styles.rememberMe}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <ThemedText style={{ fontSize: 13 }}>
+                {rememberMe ? '✅' : '⬜'} Recuérdame
+              </ThemedText>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.button, loading && { opacity: 0.5 }]}
               onPress={handleLogin}
@@ -233,18 +267,32 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* REGISTRO */}
           <View style={styles.formPage}>
-            <TextInput
+            <ThemedInput
               style={styles.input}
               placeholder="Nombre completo"
               value={name}
               onChangeText={setName}
             />
-            <View style={styles.pickerContainer}>
+            <View
+              style={[
+                styles.pickerContainer,
+                {
+                  backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff',
+                  borderColor: colorScheme === 'dark' ? '#444' : '#ccc',
+                },
+              ]}
+            >
               <Picker
                 selectedValue={gender}
                 onValueChange={setGender}
-                style={styles.picker}
+                style={{
+                  color: colorScheme === 'dark' ? '#fff' : '#000',
+                  height: 50,
+                  width: '100%',
+                }}
+                dropdownIconColor={colorScheme === 'dark' ? '#fff' : '#000'}
               >
                 <Picker.Item
                   label="Selecciona tu sexo"
@@ -260,12 +308,19 @@ export default function LoginScreen() {
               onPress={() => setShowDatePicker(true)}
               style={[styles.input, { justifyContent: 'center' }]}
             >
-              <Text style={{ color: birthDate ? '#000' : '#888' }}>
+              <ThemedText
+                style={{
+                  color: birthDate
+                    ? Colors[colorScheme ?? 'light'].text
+                    : '#888',
+                }}
+              >
                 {birthDate
                   ? birthDate.toLocaleDateString()
                   : 'Fecha de nacimiento'}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
+
             {showDatePicker && (
               <DateTimePicker
                 value={birthDate || new Date(2000, 0, 1)}
@@ -277,7 +332,7 @@ export default function LoginScreen() {
                 }}
               />
             )}
-            <TextInput
+            <ThemedInput
               style={styles.input}
               placeholder="Correo electrónico"
               value={email}
@@ -286,7 +341,7 @@ export default function LoginScreen() {
               keyboardType="email-address"
             />
             <View style={styles.passwordContainer}>
-              <TextInput
+              <ThemedInput
                 style={styles.passwordInput}
                 placeholder="Contraseña"
                 value={password}
@@ -300,7 +355,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
             <View style={styles.passwordContainer}>
-              <TextInput
+              <ThemedInput
                 style={styles.passwordInput}
                 placeholder="Confirmar contraseña"
                 value={confirmPassword}
@@ -343,15 +398,18 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    marginBottom: 12,
+  },
+
   fullContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
-  },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 8,
   },
   title: {
     fontSize: 28,
@@ -360,7 +418,6 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   input: {
-    backgroundColor: '#fff',
     padding: 14,
     borderRadius: 8,
     marginBottom: 12,
@@ -387,11 +444,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
     marginBottom: 12,
-    backgroundColor: '#fff',
     paddingHorizontal: 10,
+    borderColor: '#ccc',
   },
   passwordInput: {
     flex: 1,
@@ -400,6 +456,11 @@ const styles = StyleSheet.create({
   togglePassword: {
     marginLeft: 10,
     fontSize: 18,
+  },
+  rememberMe: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    marginLeft: 5,
   },
   pickerContainer: {
     backgroundColor: '#fff',
