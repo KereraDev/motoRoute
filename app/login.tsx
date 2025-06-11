@@ -53,34 +53,40 @@ export default function LoginScreen() {
 
   const showError = error => {
     let mensaje = 'Ocurrió un error.';
-    switch (error.code) {
-      case 'auth/invalid-email':
-        mensaje = 'El correo no tiene un formato válido.';
-        break;
-      case 'auth/user-not-found':
-        mensaje = 'No existe una cuenta con este correo.';
-        break;
-      case 'auth/wrong-password':
-        mensaje = 'La contraseña es incorrecta.';
-        break;
-      case 'auth/email-already-in-use':
-        mensaje = 'Este correo ya está registrado.';
-        break;
-      case 'auth/too-many-requests':
-        mensaje = 'Demasiados intentos fallidos. Intenta más tarde.';
-        break;
-      case 'auth/weak-password':
-        mensaje = 'La contraseña debe tener al menos 6 caracteres.';
-        break;
-      case 'auth/missing-password':
-        mensaje = 'Debes ingresar una contraseña.';
-        break;
-      case 'auth/missing-email':
-        mensaje = 'Debes ingresar un correo electrónico.';
-        break;
-      default:
-        mensaje = 'Error: ' + error.message;
+
+    if (error && typeof error.code === 'string') {
+      switch (error.code) {
+        case 'auth/invalid-email':
+          mensaje = 'El correo no tiene un formato válido.';
+          break;
+        case 'auth/user-not-found':
+          mensaje = 'No existe una cuenta con este correo.';
+          break;
+        case 'auth/wrong-password':
+          mensaje = 'La contraseña es incorrecta.';
+          break;
+        case 'auth/email-already-in-use':
+          mensaje = 'Este correo ya está registrado.';
+          break;
+        case 'auth/too-many-requests':
+          mensaje = 'Demasiados intentos fallidos. Intenta más tarde.';
+          break;
+        case 'auth/weak-password':
+          mensaje = 'La contraseña debe tener al menos 6 caracteres.';
+          break;
+        case 'auth/missing-password':
+          mensaje = 'Debes ingresar una contraseña.';
+          break;
+        case 'auth/missing-email':
+          mensaje = 'Debes ingresar un correo electrónico.';
+          break;
+        default:
+          mensaje = 'Error desconocido: ' + error.message;
+      }
+    } else {
+      mensaje = 'Error inesperado. Verifica los datos ingresados.';
     }
+
     Alert.alert('Error', mensaje);
   };
 
@@ -89,10 +95,15 @@ export default function LoginScreen() {
       Alert.alert('Validación', 'Debes ingresar un correo electrónico.');
       return;
     }
+    if (!password.trim()) {
+      Alert.alert('Validación', 'Debes ingresar una contraseña.');
+      return;
+    }
+
     setLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
     } finally {
@@ -101,18 +112,23 @@ export default function LoginScreen() {
   };
 
   const handleRegister = async () => {
-    if (
-      !name ||
-      name.trim().length < 3 ||
-      /^[a-zA-Z\s]+$/.test(name) === false
-    ) {
+    // Validación de nombre realista
+    const nombreValido =
+      name &&
+      name.trim().length >= 3 &&
+      /^[a-zA-Z\s]+$/.test(name) &&
+      !/^([a-zA-Z])\1{1,}$/.test(name.trim());
+
+    if (!nombreValido) {
       Alert.alert('Nombre inválido', 'Ingresa un nombre real.');
       return;
     }
+
     if (!gender) {
       Alert.alert('Campo requerido', 'Selecciona un sexo.');
       return;
     }
+
     if (!birthDate) {
       Alert.alert(
         'Campo requerido',
@@ -120,19 +136,38 @@ export default function LoginScreen() {
       );
       return;
     }
+
+    // Validación de rango de fecha realista
+    const hoy = new Date();
+    const minimo = new Date(1900, 0, 1); // 1 enero 1900
+    if (birthDate > hoy || birthDate < minimo) {
+      Alert.alert(
+        'Fecha inválida',
+        'Selecciona una fecha de nacimiento válida.'
+      );
+      return;
+    }
+
     if (!email.trim()) {
       Alert.alert('Campo requerido', 'Debes ingresar un correo electrónico.');
       return;
     }
+
+    if (!password.trim()) {
+      Alert.alert('Campo requerido', 'Debes ingresar una contraseña.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Las contraseñas no coinciden.');
       return;
     }
+
     setLoading(true);
     try {
       await auth().createUserWithEmailAndPassword(email, password);
       Alert.alert('Éxito', 'Cuenta creada correctamente.');
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
     } finally {
@@ -211,7 +246,11 @@ export default function LoginScreen() {
                 onValueChange={setGender}
                 style={styles.picker}
               >
-                <Picker.Item label="Selecciona tu sexo" value="" />
+                <Picker.Item
+                  label="Selecciona tu sexo"
+                  value=""
+                  enabled={false}
+                />
                 <Picker.Item label="Masculino" value="Masculino" />
                 <Picker.Item label="Femenino" value="Femenino" />
                 <Picker.Item label="Prefiero no decirlo" value="Otro" />
