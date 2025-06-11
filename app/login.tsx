@@ -6,6 +6,7 @@ import { ciudadesDeChile } from '@/utils/ciudades';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -188,7 +189,35 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await auth().createUserWithEmailAndPassword(email, password);
+      const credenciales = await auth().createUserWithEmailAndPassword(
+        email,
+        password
+      );
+      const uid = credenciales.user.uid;
+
+      try {
+        await firestore()
+          .collection('usuarios')
+          .doc(uid)
+          .set({
+            uidInterno: 'uid001', // valor fijo por ahora
+            nombreVisible: name.trim(),
+            correo: email.trim(),
+            ciudad: city,
+            rol: ['usuario'],
+            biografia: '',
+            fotoPerfilURL: 'fotoPerfil',
+            fechaNacimiento: birthDate,
+            fechaCreacion: firestore.FieldValue.serverTimestamp(),
+            amigos: [],
+            rutasCompletadas: [],
+          });
+      } catch (firestoreError) {
+        console.error('Error al guardar en Firestore:', firestoreError);
+        Alert.alert('Error', 'Error al guardar los datos del usuario.');
+        return;
+      }
+
       Alert.alert('Éxito', 'Cuenta creada correctamente.');
       router.replace('/(tabs)/main');
     } catch (error) {
