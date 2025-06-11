@@ -2,6 +2,7 @@ import ThemedInput from '@/components/ui/ThemedInput';
 import ThemedText from '@/components/ui/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ciudadesDeChile } from '@/utils/ciudades';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import auth from '@react-native-firebase/auth';
@@ -32,6 +33,7 @@ export default function LoginScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
+  const [city, setCity] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -165,7 +167,10 @@ export default function LoginScreen() {
       Alert.alert('Fecha inválida', 'Selecciona una fecha válida.');
       return;
     }
-
+    if (!city) {
+      Alert.alert('Campo requerido', 'Selecciona una ciudad.');
+      return;
+    }
     if (!email.trim()) {
       Alert.alert('Campo requerido', 'Debes ingresar un correo.');
       return;
@@ -324,12 +329,47 @@ export default function LoginScreen() {
                 value={birthDate || new Date(2000, 0, 1)}
                 mode="date"
                 display="spinner"
-                onChange={(_, date) => {
+                onChange={(event, date) => {
                   setShowDatePicker(false);
-                  if (date) setBirthDate(date);
+                  if (event.type !== 'dismissed' && date) {
+                    setBirthDate(date);
+                  }
                 }}
+                minimumDate={new Date(1900, 0, 1)}
+                maximumDate={new Date()} // evita fechas futuras
               />
             )}
+
+            <View
+              style={[
+                styles.pickerContainer,
+                {
+                  backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff',
+                  borderColor: colorScheme === 'dark' ? '#444' : '#ccc',
+                },
+              ]}
+            >
+              <Picker
+                selectedValue={city}
+                onValueChange={setCity}
+                style={{
+                  color: colorScheme === 'dark' ? '#fff' : '#000',
+                  height: 50,
+                  width: '100%',
+                }}
+                dropdownIconColor={colorScheme === 'dark' ? '#fff' : '#000'}
+              >
+                <Picker.Item
+                  label="Selecciona tu ciudad"
+                  value=""
+                  enabled={false}
+                />
+                {ciudadesDeChile.map(ciudad => (
+                  <Picker.Item key={ciudad} label={ciudad} value={ciudad} />
+                ))}
+              </Picker>
+            </View>
+
             <ThemedInput
               style={styles.input}
               placeholder="Correo electrónico"
