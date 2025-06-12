@@ -195,12 +195,25 @@ export default function LoginScreen() {
       );
       const uid = credenciales.user.uid;
 
+      let uidInterno = 'uid001';
       try {
-        await firestore()
-          .collection('usuarios')
-          .doc(uid)
-          .set({
-            uidInterno: 'uid001', // valor fijo por ahora
+        const contadorRef = firestore()
+          .collection('contadores')
+          .doc('usuarios');
+        await firestore().runTransaction(async transaction => {
+          const snapshot = await transaction.get(contadorRef);
+          let numero = 1;
+          if (snapshot.exists) {
+            numero = (snapshot.data()?.contador ?? 0) + 1;
+          }
+          uidInterno = `uid${String(numero).padStart(3, '0')}`;
+
+          // Actualizar contador
+          transaction.set(contadorRef, { contador: numero });
+
+          // Guardar usuario con uidInterno generado
+          transaction.set(firestore().collection('usuarios').doc(uid), {
+            uidInterno,
             nombreVisible: name.trim(),
             correo: email.trim(),
             ciudad: city,
@@ -212,13 +225,13 @@ export default function LoginScreen() {
             amigos: [],
             rutasCompletadas: [],
           });
+        });
       } catch (firestoreError) {
         console.error('Error al guardar en Firestore:', firestoreError);
         Alert.alert('Error', 'Error al guardar los datos del usuario.');
         return;
       }
 
-      Alert.alert('Éxito', 'Cuenta creada correctamente.');
       router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
