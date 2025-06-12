@@ -172,23 +172,44 @@ export default function LoginScreen() {
         password
       );
       const uid = credenciales.user.uid;
-      await firestore()
-        .collection('usuarios')
-        .doc(uid)
-        .set({
-          uidInterno: 'uid001',
-          nombreVisible: name.trim(),
-          correo: email.trim(),
-          ciudad: city,
-          rol: ['usuario'],
-          biografia: '',
-          fotoPerfilURL: 'fotoPerfil',
-          fechaNacimiento: birthDate,
-          fechaCreacion: firestore.FieldValue.serverTimestamp(),
-          amigos: [],
-          rutasCompletadas: [],
+
+      let uidInterno = 'uid001';
+      try {
+        const contadorRef = firestore()
+          .collection('contadores')
+          .doc('usuarios');
+        await firestore().runTransaction(async transaction => {
+          const snapshot = await transaction.get(contadorRef);
+          let numero = 1;
+          if (snapshot.exists()) {
+            numero = (snapshot.data()?.contador ?? 0) + 1;
+          }
+          uidInterno = `uid${String(numero).padStart(3, '0')}`;
+
+          // Actualizar contador
+          transaction.set(contadorRef, { contador: numero });
+
+          // Guardar usuario con uidInterno generado
+          transaction.set(firestore().collection('usuarios').doc(uid), {
+            uidInterno,
+            nombreVisible: name.trim(),
+            correo: email.trim(),
+            ciudad: city,
+            rol: ['usuario'],
+            biografia: '',
+            fotoPerfilURL: 'fotoPerfil',
+            fechaNacimiento: birthDate,
+            fechaCreacion: firestore.FieldValue.serverTimestamp(),
+            amigos: [],
+            rutasCompletadas: [],
+          });
         });
-      Alert.alert('Éxito', 'Cuenta creada correctamente.');
+      } catch (firestoreError) {
+        console.error('Error al guardar en Firestore:', firestoreError);
+        Alert.alert('Error', 'Error al guardar los datos del usuario.');
+        return;
+      }
+
       router.replace('/(tabs)/main');
     } catch (error) {
       showError(error);
