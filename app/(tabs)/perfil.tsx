@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const AVATAR_DEFAULT =
+  'https://www.autoocupacio.org/wp-content/uploads/2017/07/Usuario-Vacio.png';
+
 export default function PerfilScreen() {
   const { user } = useUserStore();
   const colorScheme = useColorScheme();
@@ -34,9 +37,12 @@ export default function PerfilScreen() {
       ]}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: user?.avatar || AVATAR_DEFAULT }}
+          style={styles.avatar}
+        />
         <Text style={[styles.username, { color: isDark ? '#fff' : '#000' }]}>
-          {user.username}
+          {user?.nombreVisible ?? ''}
         </Text>
         <Text style={[styles.label, { color: isDark ? '#ccc' : '#555' }]}>
           Frase destacada:

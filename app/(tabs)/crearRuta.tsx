@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Alert,
   Image,
@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   View,
   useColorScheme,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -17,72 +18,41 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { usePostStore } from '@/store/postStore';
 import { useCameraStore } from '@/store/cameraStore';
-import { NewPostInput } from '@/types/Post';
+import firestore from '@react-native-firebase/firestore';
+import { useUserStore } from '@/store/userStore';
 
 interface LocationCoords {
   latitude: number;
   longitude: number;
 }
 
-export default function Anadir() {
+export default function CrearRuta() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const [text, setText] = useState('');
-  const [destino, setDestino] = useState('');
+  const [titulo, setTitulo] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
   const [rutaRecorrida, setRutaRecorrida] = useState<LocationCoords[]>([]);
   const [seguimientoActivo, setSeguimientoActivo] = useState(false);
 
   const seguimientoRef = useRef<Location.LocationSubscription | null>(null);
   const router = useRouter();
-  const addPost = usePostStore(state => state.addPost);
   const { photoUri, clearPhoto } = useCameraStore();
+  const { user } = useUserStore();
 
   useEffect(() => {
     if (photoUri && !imageUri) {
       setImageUri(photoUri);
     }
-  }, [photoUri]);
+  }, [photoUri, imageUri]);
 
-  const openCamera = () => {
+  const openCamera = useCallback(() => {
     router.push('/camera');
-  };
+  }, [router]);
 
-  const handlePost = () => {
-    const missingFields = [];
-    if (!imageUri) missingFields.push('Imagen');
-    if (!destino.trim()) missingFields.push('Título');
-    if (!text.trim()) missingFields.push('Descripción');
-    if (rutaRecorrida.length < 2) missingFields.push('Ruta Recorrida');
-
-    if (missingFields.length > 0) {
-      Alert.alert(
-        'Error',
-        `Completa los siguientes campos:\n- ${missingFields.join('\n- ')}`
-      );
-      return;
-    }
-
-    const newPost: NewPostInput = {
-      text: `${destino}\n${text}`,
-      imageUri,
-      route: rutaRecorrida,
-    };
-
-    addPost(newPost);
-    clearPhoto();
-    setText('');
-    setDestino('');
-    setImageUri(undefined);
-    setRutaRecorrida([]);
-    detenerSeguimiento();
-    router.replace('/main');
-  };
-
-  const comenzarSeguimiento = async () => {
+  const comenzarSeguimiento = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permiso denegado', 'No se puede acceder a la ubicación.');
@@ -108,15 +78,84 @@ export default function Anadir() {
     );
 
     seguimientoRef.current = sub;
-  };
+  }, []);
 
-  const detenerSeguimiento = () => {
+  const detenerSeguimiento = useCallback(() => {
     if (seguimientoRef.current) {
       seguimientoRef.current.remove();
       seguimientoRef.current = null;
     }
     setSeguimientoActivo(false);
-  };
+  }, []);
+
+  const limpiarFormulario = useCallback(() => {
+    clearPhoto();
+    setTitulo('');
+    setDescripcion('');
+    setImageUri(undefined);
+    setRutaRecorrida([]);
+    detenerSeguimiento();
+  }, [clearPhoto, detenerSeguimiento]);
+
+  const handlePost = useCallback(async () => {
+    const missingFields = [];
+    if (!titulo.trim()) missingFields.push('Título');
+    if (!descripcion.trim()) missingFields.push('Descripción');
+    if (rutaRecorrida.length < 2) missingFields.push('Ruta Recorrida');
+
+    if (missingFields.length > 0) {
+      Alert.alert(
+        'Error',
+        `Completa los siguientes campos:\n- ${missingFields.join('\n- ')}`
+      );
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('Error', 'No hay usuario autenticado.');
+      return;
+    }
+
+    try {
+      // Si en el futuro quieres subir la foto, aquí iría la lógica de Storage.
+      // Por ahora solo guarda la URI si existe.
+      const fotoUrl = imageUri ?? '';
+
+      const dataToSave = {
+        coordenadas: rutaRecorrida,
+        creadorUid: user.uid,
+        nombreVisible:
+          user.nombreVisible ?? user.nombre ?? 'No se encontro usuario',
+        descripcion,
+        fechaCreacion: firestore.FieldValue.serverTimestamp(),
+        participantes: [user.uid],
+        publica: true,
+        titulo,
+        fotoUrl,
+        likesCount: 0,
+        commentsCount: 0,
+      };
+      console.log('Guardando en Firestore:', dataToSave);
+
+      await firestore().collection('rutas').add(dataToSave);
+
+      limpiarFormulario();
+      router.replace('/crearRuta');
+    } catch (e) {
+      Alert.alert(
+        'Error',
+        `No se pudo guardar la ruta.\n${e instanceof Error ? e.message : JSON.stringify(e)}`
+      );
+    }
+  }, [
+    titulo,
+    descripcion,
+    rutaRecorrida,
+    user,
+    limpiarFormulario,
+    router,
+    imageUri,
+  ]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -146,10 +185,10 @@ export default function Anadir() {
           </View>
 
           <TextInput
-            placeholder="Nombre de la ruta."
+            placeholder="Título de la ruta."
             placeholderTextColor={isDark ? '#aaa' : '#999'}
-            value={destino}
-            onChangeText={setDestino}
+            value={titulo}
+            onChangeText={setTitulo}
             style={[
               styles.input,
               {
@@ -162,8 +201,8 @@ export default function Anadir() {
           <TextInput
             placeholder="Descripción."
             placeholderTextColor={isDark ? '#aaa' : '#999'}
-            value={text}
-            onChangeText={setText}
+            value={descripcion}
+            onChangeText={setDescripcion}
             multiline
             style={[
               styles.input,
@@ -188,30 +227,43 @@ export default function Anadir() {
         </View>
 
         <View style={styles.mapContainer}>
-          <MapView
-            style={styles.map}
-            region={{
-              latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
-              longitude: rutaRecorrida.at(-1)?.longitude ?? -70.6693,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-          >
-            {rutaRecorrida.length > 0 && (
-              <Marker
-                coordinate={rutaRecorrida[0]}
-                title="Inicio"
-                pinColor="green"
-              />
-            )}
-            {rutaRecorrida.length > 1 && (
-              <Polyline
-                coordinates={rutaRecorrida}
-                strokeColor="#28a745"
-                strokeWidth={4}
-              />
-            )}
-          </MapView>
+          {Platform.OS !== 'web' ? (
+            <MapView
+              style={styles.map}
+              region={{
+                latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
+                longitude: rutaRecorrida.at(-1)?.longitude ?? -70.6693,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+            >
+              {rutaRecorrida.length > 0 && (
+                <Marker
+                  coordinate={rutaRecorrida[0]}
+                  title="Inicio"
+                  pinColor="green"
+                />
+              )}
+              {rutaRecorrida.length > 1 && (
+                <Polyline
+                  coordinates={rutaRecorrida}
+                  strokeColor="#28a745"
+                  strokeWidth={4}
+                />
+              )}
+            </MapView>
+          ) : (
+            <View
+              style={{
+                height: 300,
+                backgroundColor: '#eee',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text>Mapa no disponible en web</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.buttonRow}>

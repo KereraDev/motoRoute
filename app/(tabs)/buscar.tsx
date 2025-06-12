@@ -7,15 +7,16 @@ import {
   FlatList,
   Image,
   Pressable,
-  useColorScheme,
+  Platform,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
-import { usePostStore } from '@/store/postStore';
+import { useColorScheme } from '../../hooks/useColorScheme';
+import { useRutasFeed } from '../../hooks/useRutasFeed';
 
 export default function BuscarScreen() {
   const colorScheme = useColorScheme();
-  const posts = usePostStore(state => state.posts);
+  const { posts } = useRutasFeed();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredPosts = [...posts]
@@ -68,37 +69,50 @@ export default function BuscarScreen() {
               </Text>
             </View>
 
-            <MapView
-              style={styles.mapPreview}
-              initialRegion={{
-                latitude: item.route?.[0]?.latitude ?? -33.4489,
-                longitude: item.route?.[0]?.longitude ?? -70.6693,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-            >
-              {item.route && item.route.length > 1 && (
-                <>
-                  <Polyline
-                    coordinates={item.route}
-                    strokeColor="#007AFF"
-                    strokeWidth={4}
-                  />
-                  <Marker
-                    coordinate={item.route[0]}
-                    title="Inicio"
-                    pinColor="green"
-                  />
-                  <Marker
-                    coordinate={item.route[item.route.length - 1]}
-                    title="Fin"
-                    pinColor="red"
-                  />
-                </>
-              )}
-            </MapView>
+            {Platform.OS !== 'web' ? (
+              <MapView
+                style={styles.mapPreview}
+                initialRegion={{
+                  latitude: item.route?.[0]?.latitude ?? -33.4489,
+                  longitude: item.route?.[0]?.longitude ?? -70.6693,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+                scrollEnabled={false}
+                zoomEnabled={false}
+              >
+                {item.route && item.route.length > 1 && (
+                  <>
+                    <Polyline
+                      coordinates={item.route}
+                      strokeColor="#007AFF"
+                      strokeWidth={4}
+                    />
+                    <Marker
+                      coordinate={item.route[0]}
+                      title="Inicio"
+                      pinColor="green"
+                    />
+                    <Marker
+                      coordinate={item.route[item.route.length - 1]}
+                      title="Fin"
+                      pinColor="red"
+                    />
+                  </>
+                )}
+              </MapView>
+            ) : (
+              <View
+                style={{
+                  height: 200,
+                  backgroundColor: '#eee',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text>Mapa no disponible en web</Text>
+              </View>
+            )}
 
             <Text
               style={[

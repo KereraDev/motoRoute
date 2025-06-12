@@ -1,20 +1,17 @@
 import { create } from 'zustand';
 
-type User = {
-  username: string;
+export type User = {
+  nombreVisible: string;
   avatar: string;
+  uid: string;
 };
 
 type UserStore = {
-  user: User;
-  setUser: (user: User) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 };
 
 export const useUserStore = create<UserStore>(set => ({
-  user: {
-    username: 'Mario',
-    avatar:
-      'https://preview.redd.it/one-piece-icons-by-me-v0-qweam8vkaxv91.jpg?width=640&crop=smart&auto=webp&s=9b7bdc3f934afe5a90f906d0d694c26ea83ff196', // imagen simulada
-  },
+  user: null,
   setUser: user => set({ user }),
 }));

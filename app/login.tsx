@@ -187,6 +187,8 @@ export default function LoginScreen() {
           fechaCreacion: firestore.FieldValue.serverTimestamp(),
           amigos: [],
           rutasCompletadas: [],
+          avatar:
+            'https://www.autoocupacio.org/wp-content/uploads/2017/07/Usuario-Vacio.png',
         });
       Alert.alert('Éxito', 'Cuenta creada correctamente.');
       router.replace('/(tabs)/main');

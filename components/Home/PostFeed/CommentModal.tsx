@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,18 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
-import { usePostStore } from '@/store/postStore';
+import firestore from '@react-native-firebase/firestore';
+import { useUserStore } from '../../../store/userStore';
+
+type Comment = {
+  id: string;
+  text: string;
+  user: {
+    username: string;
+    avatar: string;
+  };
+  createdAt: any;
+};
 
 type CommentModalProps = {
   visible: boolean;
@@ -29,18 +40,47 @@ export default function CommentModal({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const post = usePostStore(state =>
-    state.posts.find(post => post.id === postId)
-  );
-  const addComment = usePostStore(state => state.addComment);
-  const toggleCommentLike = usePostStore(state => state.toggleCommentLike);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const user = useUserStore(state => state.user);
 
-  const handleSend = () => {
-    if (newComment.trim()) {
-      addComment(postId, newComment.trim());
-      setNewComment('');
-    }
+  // 1. Leer comentarios en tiempo real
+  useEffect(() => {
+    if (!postId) return;
+    const unsubscribe = firestore()
+      .collection('rutas')
+      .doc(postId)
+      .collection('comentarios')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(snapshot => {
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Comment[];
+        setComments(data);
+        setLoading(false);
+      });
+    return unsubscribe;
+  }, [postId]);
+
+  // 2. Enviar comentario
+  const handleSend = async () => {
+    if (!newComment.trim() || !user) return;
+    const userData = {
+      username: user.nombreVisible,
+      avatar: user.avatar,
+    };
+    await firestore()
+      .collection('rutas')
+      .doc(postId)
+      .collection('comentarios')
+      .add({
+        text: newComment.trim(),
+        user: userData,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      });
+    setNewComment('');
   };
 
   return (
@@ -68,7 +108,7 @@ export default function CommentModal({
         </View>
 
         <FlatList
-          data={post?.comments ?? []}
+          data={comments}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={styles.commentItem}>
@@ -82,40 +122,31 @@ export default function CommentModal({
                 >
                   {item.user.username}
                 </Text>
-                <View style={styles.commentRow}>
-                  <Text
-                    style={[
-                      styles.commentText,
-                      { color: isDark ? '#eee' : '#A9A9A9' },
-                    ]}
-                  >
-                    {item.text}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => toggleCommentLike(postId, item.id)}
-                    style={styles.commentLikeButton}
-                  >
-                    <Ionicons
-                      name={item.liked ? 'heart' : 'heart-outline'}
-                      size={16}
-                      color={item.liked ? 'tomato' : isDark ? '#aaa' : '#888'}
-                    />
-                    {(item.likes ?? 0) > 0 && (
-                      <Text
-                        style={[
-                          styles.commentLikeCount,
-                          { color: isDark ? '#aaa' : '#888' },
-                        ]}
-                      >
-                        {item.likes}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
+                <Text
+                  style={[
+                    styles.commentText,
+                    { color: isDark ? '#eee' : '#A9A9A9' },
+                  ]}
+                >
+                  {item.text}
+                </Text>
               </View>
             </View>
           )}
           style={styles.commentsList}
+          ListEmptyComponent={
+            !loading && (
+              <Text
+                style={{
+                  color: isDark ? '#aaa' : '#888',
+                  textAlign: 'center',
+                  marginTop: 20,
+                }}
+              >
+                ¡Sé el primero en comentar!
+              </Text>
+            )
+          }
         />
 
         <KeyboardAvoidingView
@@ -199,24 +230,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 13,
   },
-  commentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 2,
-  },
   commentText: {
     fontSize: 15,
     flex: 1,
-  },
-  commentLikeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  commentLikeCount: {
-    fontSize: 12,
-    marginLeft: 3,
+    marginTop: 2,
   },
   inputContainer: {
     flexDirection: 'row',
