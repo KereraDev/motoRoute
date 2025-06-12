@@ -1,17 +1,14 @@
-// app/home.tsx
-
-import Header from '@/components/Home/Header/Header';
-import PostFeed from '@/components/Home/PostFeed/PostFeed';
-import { usePostStore } from '@/store/postStore';
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useColorScheme } from '../../hooks/useColorScheme';
+import { useRutasFeed } from '../../hooks/useRutasFeed';
+import Header from '@/components/Home/Header/Header';
+import PostFeed from '@/components/Home/PostFeed/PostFeed';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
-  const posts = usePostStore(state => state.posts);
-  const toggleLike = usePostStore(state => state.toggleLike);
+  const { posts, loading } = useRutasFeed();
 
   return (
     <View
@@ -24,27 +21,21 @@ export default function HomeScreen() {
       ]}
     >
       <Header />
-
-      <ScrollView
-        style={styles.mainScroll}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-      >
-        <View style={styles.separator} />
-        <PostFeed posts={posts} onToggleLike={toggleLike} />
-      </ScrollView>
+      <View style={styles.separator} />
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#008000"
+          style={{ marginTop: 40 }}
+        />
+      ) : (
+        <PostFeed posts={posts} onToggleLike={() => {}} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  mainScroll: {
-    flex: 1,
-  },
-  separator: {
-    height: 8,
-  },
+  container: { flex: 1 },
+  separator: { height: 10 },
 });

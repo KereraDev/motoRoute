@@ -172,7 +172,6 @@ export default function LoginScreen() {
         password
       );
       const uid = credenciales.user.uid;
-
       let uidInterno = 'uid001';
       try {
         const contadorRef = firestore()
@@ -189,7 +188,7 @@ export default function LoginScreen() {
           // Actualizar contador
           transaction.set(contadorRef, { contador: numero });
 
-          // Guardar usuario con uidInterno generado
+          // Guardar usuario con uidInterno generado y avatar
           transaction.set(firestore().collection('usuarios').doc(uid), {
             uidInterno,
             nombreVisible: name.trim(),
@@ -202,6 +201,8 @@ export default function LoginScreen() {
             fechaCreacion: firestore.FieldValue.serverTimestamp(),
             amigos: [],
             rutasCompletadas: [],
+            avatar:
+              'https://www.autoocupacio.org/wp-content/uploads/2017/07/Usuario-Vacio.png',
           });
         });
       } catch (firestoreError) {
