@@ -188,57 +188,39 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+  try {
+    const credenciales = await auth().createUserWithEmailAndPassword(email, password);
+    const uid = credenciales.user.uid;
+
+    const uidInterno = `uid-${uid.slice(0, 6)}`;
+
     try {
-      const credenciales = await auth().createUserWithEmailAndPassword(
-        email,
-        password
-      );
-      const uid = credenciales.user.uid;
-
-      let uidInterno = 'uid001';
-      try {
-        const contadorRef = firestore()
-          .collection('contadores')
-          .doc('usuarios');
-        await firestore().runTransaction(async transaction => {
-          const snapshot = await transaction.get(contadorRef);
-          let numero = 1;
-          if (snapshot.exists()) {
-            numero = (snapshot.data()?.contador ?? 0) + 1;
-          }
-          uidInterno = `uid${String(numero).padStart(3, '0')}`;
-
-          // Actualizar contador
-          transaction.set(contadorRef, { contador: numero });
-
-          // Guardar usuario con uidInterno generado
-          transaction.set(firestore().collection('usuarios').doc(uid), {
-            uidInterno,
-            nombreVisible: name.trim(),
-            correo: email.trim(),
-            ciudad: city,
-            rol: ['usuario'],
-            biografia: '',
-            fotoPerfilURL: 'fotoPerfil',
-            fechaNacimiento: birthDate,
-            fechaCreacion: firestore.FieldValue.serverTimestamp(),
-            amigos: [],
-            rutasCompletadas: [],
-          });
-        });
-      } catch (firestoreError) {
-        console.error('Error al guardar en Firestore:', firestoreError);
-        Alert.alert('Error', 'Error al guardar los datos del usuario.');
-        return;
-      }
-
-      router.replace('/(tabs)/main');
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
+      await firestore().collection('usuarios').doc(uid).set({
+        uidInterno,
+        nombreVisible: name.trim(),
+        correo: email.trim(),
+        ciudad: city,
+        rol: ['usuario'],
+        biografia: '',
+        fotoPerfilURL: 'fotoPerfil',
+        fechaNacimiento: birthDate,
+        fechaCreacion: firestore.FieldValue.serverTimestamp(),
+        amigos: [],
+        rutasCompletadas: [],
+      });
+    } catch (firestoreError) {
+      console.error('Error al guardar en Firestore:', firestoreError);
+      Alert.alert('Error', 'No se pudo guardar el usuario en la base de datos.');
+      return;
     }
-  };
+
+    router.replace('/(tabs)/main');
+  } catch (error) {
+    showError(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView
