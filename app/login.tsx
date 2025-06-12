@@ -203,7 +203,7 @@ export default function LoginScreen() {
         await firestore().runTransaction(async transaction => {
           const snapshot = await transaction.get(contadorRef);
           let numero = 1;
-          if (snapshot.exists) {
+          if (snapshot.exists()) {
             numero = (snapshot.data()?.contador ?? 0) + 1;
           }
           uidInterno = `uid${String(numero).padStart(3, '0')}`;
