@@ -22,7 +22,7 @@ export function useRutasFeed() {
                 .get();
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                username = userData?.nombre ?? 'Usuario';
+                username = userData?.nombreVisible ?? 'Usuario';
                 avatar = userData?.avatar ?? '';
               }
             } catch {}
@@ -34,8 +34,9 @@ export function useRutasFeed() {
               caption: data.descripcion,
               route: data.coordenadas,
               image: data.fotoUrl || undefined,
-              likes: 0,
-              liked: false,
+              commentsCount: data.commentsCount ?? 0,
+              likesCount: data.likesCount ?? 0,
+              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
             };
           })
         );

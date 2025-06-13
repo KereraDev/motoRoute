@@ -64,22 +64,31 @@ export default function CommentModal({
     return unsubscribe;
   }, [postId]);
 
-  // 2. Enviar comentario
+  // 2. Enviar comentario y actualizar contador
   const handleSend = async () => {
     if (!newComment.trim() || !user) return;
-    const userData = {
-      username: user.nombreVisible,
-      avatar: user.avatar,
-    };
-    await firestore()
-      .collection('rutas')
-      .doc(postId)
-      .collection('comentarios')
-      .add({
+
+    const rutaRef = firestore().collection('rutas').doc(postId);
+    const comentariosRef = rutaRef.collection('comentarios');
+
+    await firestore().runTransaction(async transaction => {
+      const rutaDoc = await transaction.get(rutaRef);
+
+      transaction.set(comentariosRef.doc(), {
         text: newComment.trim(),
-        user: userData,
+        user: {
+          username: user.nombreVisible,
+          avatar: user.avatar,
+        },
         createdAt: firestore.FieldValue.serverTimestamp(),
       });
+
+      const currentCount = rutaDoc.data()?.commentsCount ?? 0;
+      transaction.update(rutaRef, {
+        commentsCount: currentCount + 1,
+      });
+    });
+
     setNewComment('');
   };
 

@@ -124,8 +124,7 @@ export default function CrearRuta() {
       const dataToSave = {
         coordenadas: rutaRecorrida,
         creadorUid: user.uid,
-        nombreVisible:
-          user.nombreVisible ?? user.nombre ?? 'No se encontro usuario',
+        nombreVisible: user.nombreVisible ?? 'No se encontro usuario',
         descripcion,
         fechaCreacion: firestore.FieldValue.serverTimestamp(),
         participantes: [user.uid],
