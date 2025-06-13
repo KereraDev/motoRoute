@@ -2,7 +2,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
-import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -33,14 +32,12 @@ const avataresDisponibles = [
 ];
 
 export default function PerfilScreen() {
-  // Hooks de estado
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const router = useRouter();
 
   const [userData, setUserData] = useState<any>(null);
   const [editing, setEditing] = useState(false);
-  const [totalPublicaciones, setTotalPublicaciones] = useState(0); // Paso 1
+  const [totalPublicaciones, setTotalPublicaciones] = useState(0);
   const [totalRutasCreadas, setTotalRutasCreadas] = useState(0);
 
   const [nameInput, setNameInput] = useState('');
@@ -54,8 +51,9 @@ export default function PerfilScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   // Cargar datos del usuario en tiempo real
+  const currentUid = auth().currentUser?.uid;
   useEffect(() => {
-    const uid = auth().currentUser?.uid;
+    const uid = currentUid;
     if (!uid) return;
 
     // Suscripción en tiempo real a los datos del usuario
@@ -63,8 +61,8 @@ export default function PerfilScreen() {
       .collection('usuarios')
       .doc(uid)
       .onSnapshot(doc => {
-        if (doc.exists) {
-          const data = doc.data();
+        if (doc.exists()) {
+          const data = doc.data() || {};
           setUserData(data);
           setNameInput(data.nombreVisible || '');
           setBirthDate(data.fechaNacimiento?.toDate?.() || null);
@@ -92,7 +90,7 @@ export default function PerfilScreen() {
       .catch(err => console.log('Error al cargar rutas:', err));
 
     return () => unsubscribe();
-  }, [auth().currentUser?.uid]);
+  }, [currentUid]);
 
   // Guardar cambios en el perfil
   const handleSaveProfile = async () => {
@@ -142,7 +140,6 @@ export default function PerfilScreen() {
     if (selectedDate) setBirthDate(selectedDate);
   };
 
-  // Si no hay datos del usuario, mostrar cargando
   if (!userData) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -151,7 +148,6 @@ export default function PerfilScreen() {
     );
   }
 
-  // Si no hay usuario logueado
   const uid = auth().currentUser?.uid;
   if (!uid) {
     Alert.alert('Error', 'No se encontró el usuario');
@@ -274,106 +270,99 @@ export default function PerfilScreen() {
               {userData.nombreVisible}
             </Text>
 
-            {!editing && (
-              <>
-                {/* Tarjeta: Biografía */}
-                <View
-                  style={[
-                    styles.statsCard,
-                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                  ]}
+            {/* Tarjeta: Biografía */}
+            <View
+              style={[
+                styles.statsCard,
+                { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+              ]}
+            >
+              <Text style={styles.cardTitle}>
+                <Feather name="message-circle" size={18} /> Biografía
+              </Text>
+              <Text style={styles.cardText}>
+                {bio?.trim() ? bio : 'Aún no tienes una biografía.'}
+              </Text>
+            </View>
+
+            {/* Tarjetas: Datos personales y Motocicleta */}
+            <View style={styles.row}>
+              {/* Tarjeta: Datos personales */}
+              <View
+                style={[
+                  styles.card,
+                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                ]}
+              >
+                <Text style={styles.cardTitle}>
+                  <Feather name="user" size={18} /> Datos personales
+                </Text>
+                <Text style={styles.cardText}>
+                  <Feather name="user-check" size={16} /> Nombre:{' '}
+                  {userData.nombreVisible}
+                </Text>
+                <Text
+                  style={[styles.cardText, { color: isDark ? '#ddd' : '#444' }]}
                 >
-                  <Text style={styles.cardTitle}>
-                    <Feather name="message-circle" size={18} /> Biografía
-                  </Text>
-                  <Text style={styles.cardText}>
-                    {bio?.trim() ? bio : 'Aún no tienes una biografía.'}
-                  </Text>
-                </View>
+                  <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
+                  {fechaFormateada}
+                </Text>
+              </View>
 
-                {/* Tarjetas: Datos personales y Motocicleta */}
-                <View style={styles.row}>
-                  {/* Tarjeta: Datos personales */}
-                  <View
-                    style={[
-                      styles.card,
-                      { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                    ]}
-                  >
-                    <Text style={styles.cardTitle}>
-                      <Feather name="user" size={18} /> Datos personales
-                    </Text>
-                    <Text style={styles.cardText}>
-                      <Feather name="user-check" size={16} /> Nombre:{' '}
-                      {userData.nombreVisible}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.cardText,
-                        { color: isDark ? '#ddd' : '#444' },
-                      ]}
-                    >
-                      <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
-                      {fechaFormateada}
-                    </Text>
-                  </View>
+              {/* Tarjeta: Motocicleta */}
+              <View
+                style={[
+                  styles.card,
+                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                ]}
+              >
+                <Text style={styles.cardTitle}>
+                  <Feather name="activity" size={18} /> Motocicleta
+                </Text>
+                <Text style={styles.cardText}>
+                  <Feather name="tag" size={16} /> Marca:{' '}
+                  {userData.motoMarca || 'No definida'}
+                </Text>
+                <Text style={styles.cardText}>
+                  <Feather name="layers" size={16} /> Modelo:{' '}
+                  {userData.motoModelo || 'No definido'}
+                </Text>
+                <Text style={styles.cardText}>
+                  <Feather name="cpu" size={16} /> Cilindrada:{' '}
+                  {userData.cilindradaCC
+                    ? `${userData.cilindradaCC} cc`
+                    : 'No definida'}
+                </Text>
+              </View>
+            </View>
 
-                  {/* Tarjeta: Motocicleta */}
-                  <View
-                    style={[
-                      styles.card,
-                      { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                    ]}
-                  >
-                    <Text style={styles.cardTitle}>
-                      <Feather name="activity" size={18} /> Motocicleta
-                    </Text>
-                    <Text style={styles.cardText}>
-                      <Feather name="tag" size={16} /> Marca:{' '}
-                      {userData.motoMarca || 'No definida'}
-                    </Text>
-                    <Text style={styles.cardText}>
-                      <Feather name="layers" size={16} /> Modelo:{' '}
-                      {userData.motoModelo || 'No definido'}
-                    </Text>
-                    <Text style={styles.cardText}>
-                      <Feather name="cpu" size={16} /> Cilindrada:{' '}
-                      {userData.cilindradaCC
-                        ? `${userData.cilindradaCC} cc`
-                        : 'No definida'}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Tarjeta: Estadísticas */}
-                <View
-                  style={[
-                    styles.statsCard,
-                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                  ]}
-                >
-                  <Text style={styles.cardTitle}>
-                    <Feather name="bar-chart-2" size={18} /> Estadísticas
-                  </Text>
-                  <Text style={styles.cardText}>
-                    <Feather name="map-pin" size={16} /> Rutas completadas:{' '}
-                    {userData.rutasCompletadas?.length || 0}
-                  </Text>
-                  <Text style={styles.cardText}>
-                    <Feather name="map" size={16} /> Rutas creadas:{' '}
-                    {totalRutasCreadas}
-                  </Text>
-                  <Text style={styles.cardText}>
-                    <Feather name="users" size={16} /> Amigos:{' '}
-                    {userData.amigos?.length || 0}
-                  </Text>
-                  <Text style={styles.cardText}>
-                    <Feather name="edit-2" size={16} /> Publicaciones:{' '}
-                    {totalPublicaciones}
-                  </Text>
-                </View>
-              </>
-            )}
+            {/* Tarjeta: Estadísticas */}
+            <View
+              style={[
+                styles.statsCard,
+                { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+              ]}
+            >
+              <Text style={styles.cardTitle}>
+                <Feather name="bar-chart-2" size={18} /> Estadísticas
+              </Text>
+              <Text style={styles.cardText}>
+                <Feather name="map-pin" size={16} /> Rutas completadas:{' '}
+                {userData.rutasCompletadas?.length || 0}
+              </Text>
+              <Text style={styles.cardText}>
+                <Feather name="map" size={16} /> Rutas creadas:{' '}
+                {totalRutasCreadas}
+              </Text>
+              <Text style={styles.cardText}>
+                <Feather name="users" size={16} /> Amigos:{' '}
+                {userData.amigos?.length || 0}
+              </Text>
+              <Text style={styles.cardText}>
+                <Feather name="edit-2" size={16} /> Publicaciones:{' '}
+                {totalPublicaciones}
+              </Text>
+            </View>
 
             {/* Botón para editar */}
             <TouchableOpacity onPress={() => setEditing(true)}>
@@ -383,6 +372,8 @@ export default function PerfilScreen() {
             </TouchableOpacity>
           </>
         )}
+
+        {/* Botón de logout */}
         <View
           style={[
             styles.card,
@@ -419,6 +410,7 @@ export default function PerfilScreen() {
         </View>
       </ScrollView>
 
+      {/* Modal para seleccionar avatar */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -526,7 +518,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 10,
-    // gap: 12, // Solo si tu versión de React Native lo soporta
   },
   card: {
     flex: 1,
@@ -538,7 +529,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     marginBottom: 10,
-    backgroundColor: '#f9f9f9', // color por defecto, puedes sobreescribir en JSX
+    backgroundColor: '#f9f9f9',
   },
   statsCard: {
     width: '100%',
