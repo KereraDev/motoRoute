@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { useCameraStore } from '@/store/cameraStore';
 import firestore from '@react-native-firebase/firestore';
 import { useUserStore } from '@/store/userStore';
+import { uploadImageToFirebase } from '@/utils/firebaseStorage';
 
 interface LocationCoords {
   latitude: number;
@@ -117,9 +118,10 @@ export default function CrearRuta() {
     }
 
     try {
-      // Si en el futuro quieres subir la foto, aquí iría la lógica de Storage.
-      // Por ahora solo guarda la URI si existe.
-      const fotoUrl = imageUri ?? '';
+      let fotoUrl = '';
+      if (imageUri) {
+        fotoUrl = await uploadImageToFirebase(imageUri);
+      }
 
       const dataToSave = {
         coordenadas: rutaRecorrida,
