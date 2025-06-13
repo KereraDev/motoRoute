@@ -6,7 +6,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
@@ -16,7 +15,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  useColorScheme,
+  useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -40,6 +39,9 @@ export default function PerfilScreen() {
   // Estados de usuario y edición
   const [userData, setUserData] = useState<any>(null);
   const [editing, setEditing] = useState(false);
+  const [editBio, setEditBio] = useState(false);
+  const [editDatos, setEditDatos] = useState(false);
+  const [editMoto, setEditMoto] = useState(false);
 
   // Estados de campos editables
   const [nameInput, setNameInput] = useState('');
@@ -61,8 +63,9 @@ export default function PerfilScreen() {
   const [showPreview, setShowPreview] = useState(false);
 
   // Cargar datos del usuario y estadísticas
+  const currentUid = auth().currentUser?.uid;
   useEffect(() => {
-    const uid = auth().currentUser?.uid;
+    const uid = currentUid;
     if (!uid) return;
 
     // Suscripción en tiempo real a los datos del usuario
@@ -70,7 +73,7 @@ export default function PerfilScreen() {
       .collection('usuarios')
       .doc(uid)
       .onSnapshot(doc => {
-        if (doc.exists) {
+        if (doc.exists()) {
           const data = doc.data() || {};
           setUserData(data);
           setNameInput(data.nombreVisible || '');
@@ -99,7 +102,7 @@ export default function PerfilScreen() {
       .catch(err => console.log('Error al cargar rutas:', err));
 
     return () => unsubscribe();
-  }, [auth().currentUser?.uid]);
+  }, [currentUid]);
 
   // Guardar cambios en el perfil
   const handleSaveProfile = async () => {
@@ -287,71 +290,279 @@ export default function PerfilScreen() {
             </Text>
 
             {/* Tarjeta: Biografía editable */}
-            <TouchableOpacity
-              onPress={() => setEditing(true)}
-              activeOpacity={0.9}
-              style={[
-                styles.bioCard,
-                { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-              ]}
-            >
-              <Text style={styles.cardTitle}>
-                <Feather name="message-circle" size={18} /> Biografía
-              </Text>
-              <Text style={styles.cardText}>
-                {bio?.trim() ? bio : 'Aún no tienes una biografía.'}
-              </Text>
-            </TouchableOpacity>
+            {editBio ? (
+              <View
+                style={[
+                  styles.bioCard,
+                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                ]}
+              >
+                <Text style={styles.cardTitle}>
+                  <Feather name="message-circle" size={18} /> Biografía
+                </Text>
+                <TextInput
+                  value={bio}
+                  onChangeText={setBio}
+                  style={[
+                    styles.input,
+                    { height: 80, textAlignVertical: 'top' },
+                  ]}
+                  multiline
+                  numberOfLines={3}
+                  placeholder="Escribe algo sobre ti..."
+                />
+                <View style={styles.editButtons}>
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={async () => {
+                      await firestore().collection('usuarios').doc(uid).update({
+                        biografia: bio.trim(),
+                      });
+                      setEditBio(false);
+                    }}
+                  >
+                    <Text style={styles.saveText}>Guardar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => {
+                      setBio(userData?.biografia || '');
+                      setEditBio(false);
+                    }}
+                  >
+                    <Text style={styles.cancelText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setEditBio(true)}
+                activeOpacity={0.9}
+                style={[
+                  styles.bioCard,
+                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                ]}
+              >
+                <Text style={styles.cardTitle}>
+                  <Feather name="message-circle" size={18} /> Biografía
+                </Text>
+                <Text style={styles.cardText}>
+                  {bio?.trim() ? bio : 'Aún no tienes una biografía.'}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Tarjetas: Datos personales y Motocicleta */}
             <View style={styles.row}>
-              {/* Tarjeta: Datos personales */}
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                ]}
-              >
-                <Text style={styles.cardTitle}>
-                  <Feather name="user" size={18} /> Datos personales
-                </Text>
-                <Text style={styles.cardText}>
-                  <Feather name="user-check" size={16} /> Nombre:{' '}
-                  {userData.nombreVisible}
-                </Text>
-                <Text
-                  style={[styles.cardText, { color: isDark ? '#ddd' : '#444' }]}
+              {/* Datos personales */}
+              {editDatos ? (
+                <View
+                  style={[
+                    styles.card,
+                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                  ]}
                 >
-                  <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
-                  {fechaFormateada}
-                </Text>
-              </View>
+                  <Text style={styles.cardTitle}>
+                    <Feather name="user" size={18} /> Datos personales
+                  </Text>
+                  <TextInput
+                    value={nameInput}
+                    onChangeText={setNameInput}
+                    style={styles.input}
+                    placeholder="Nombre visible"
+                    autoCapitalize="words"
+                  />
 
-              {/* Tarjeta: Motocicleta */}
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-                ]}
-              >
-                <Text style={styles.cardTitle}>
-                  <Feather name="activity" size={18} /> Motocicleta
-                </Text>
-                <Text style={styles.cardText}>
-                  <Feather name="tag" size={16} /> Marca:{' '}
-                  {userData.motoMarca || 'No definida'}
-                </Text>
-                <Text style={styles.cardText}>
-                  <Feather name="layers" size={16} /> Modelo:{' '}
-                  {userData.motoModelo || 'No definido'}
-                </Text>
-                <Text style={styles.cardText}>
-                  <Feather name="cpu" size={16} /> Cilindrada:{' '}
-                  {userData.cilindradaCC
-                    ? `${userData.cilindradaCC} cc`
-                    : 'No definida'}
-                </Text>
-              </View>
+                  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                    <Text
+                      style={[styles.text, { color: isDark ? '#ddd' : '#333' }]}
+                    >
+                      Fecha de nacimiento:{' '}
+                      {birthDate ? birthDate.toDateString() : 'No definida'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={birthDate || new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowDatePicker(Platform.OS === 'ios');
+                        if (selectedDate) setBirthDate(selectedDate);
+                      }}
+                      maximumDate={new Date()}
+                      locale={Localization.locale}
+                    />
+                  )}
+                  <View style={{ marginTop: 10 }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.buttonInsideCard,
+                        styles.saveButtonInside,
+                        { marginRight: 0, marginBottom: 8, width: '100%' },
+                      ]}
+                      onPress={async () => {
+                        await firestore()
+                          .collection('usuarios')
+                          .doc(uid)
+                          .update({
+                            nombreVisible: nameInput.trim(),
+                            fechaNacimiento: birthDate,
+                          });
+                        setEditDatos(false);
+                      }}
+                    >
+                      <Text style={styles.saveText}>Guardar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.buttonInsideCard,
+                        styles.cancelButtonInside,
+                        { marginLeft: 0, width: '100%' },
+                      ]}
+                      onPress={() => {
+                        setNameInput(userData?.nombreVisible || '');
+                        setBirthDate(
+                          userData?.fechaNacimiento?.toDate?.() || null
+                        );
+                        setEditDatos(false);
+                      }}
+                    >
+                      <Text style={styles.cancelText}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setEditDatos(true)}
+                  activeOpacity={0.9}
+                  style={[
+                    styles.card,
+                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>
+                    <Feather name="user" size={18} /> Datos personales
+                  </Text>
+                  <Text style={styles.cardText}>
+                    <Feather name="user-check" size={16} /> Nombre:{' '}
+                    {userData.nombreVisible}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardText,
+                      { color: isDark ? '#ddd' : '#444' },
+                    ]}
+                  >
+                    <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
+                    {fechaFormateada}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Motocicleta */}
+              {editMoto ? (
+                <View
+                  style={[
+                    styles.card,
+                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>
+                    <Feather name="activity" size={18} /> Motocicleta
+                  </Text>
+                  <TextInput
+                    value={motoMarca}
+                    onChangeText={setMotoMarca}
+                    style={styles.input}
+                    placeholder="Marca"
+                  />
+                  <TextInput
+                    value={motoModelo}
+                    onChangeText={setMotoModelo}
+                    style={styles.input}
+                    placeholder="Modelo"
+                  />
+                  <Picker
+                    selectedValue={cilindradaCC}
+                    onValueChange={itemValue => setCilindradaCC(itemValue)}
+                    style={[styles.picker, { color: isDark ? '#fff' : '#000' }]}
+                  >
+                    <Picker.Item
+                      label="Selecciona una cilindrada"
+                      value={null}
+                    />
+                    {[150, 200, 250, 400, 500, 650, 750, 1000].map(cc => (
+                      <Picker.Item key={cc} label={`${cc} cc`} value={cc} />
+                    ))}
+                  </Picker>
+                  <View style={{ marginTop: 10 }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.buttonInsideCard,
+                        styles.saveButtonInside,
+                        { marginRight: 0, marginBottom: 8, width: '100%' },
+                      ]}
+                      onPress={async () => {
+                        await firestore()
+                          .collection('usuarios')
+                          .doc(uid)
+                          .update({
+                            motoMarca: motoMarca.trim(),
+                            motoModelo: motoModelo.trim(),
+                            cilindradaCC,
+                          });
+                        setEditMoto(false);
+                      }}
+                    >
+                      <Text style={styles.saveText}>Guardar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.buttonInsideCard,
+                        styles.cancelButtonInside,
+                        { marginLeft: 0, width: '100%' },
+                      ]}
+                      onPress={() => {
+                        setMotoMarca(userData?.motoMarca || '');
+                        setMotoModelo(userData?.motoModelo || '');
+                        setCilindradaCC(userData?.cilindradaCC || null);
+                        setEditMoto(false);
+                      }}
+                    >
+                      <Text style={styles.cancelText}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setEditMoto(true)}
+                  activeOpacity={0.9}
+                  style={[
+                    styles.card,
+                    { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>
+                    <Feather name="activity" size={18} /> Motocicleta
+                  </Text>
+                  <Text style={styles.cardText}>
+                    <Feather name="tag" size={16} /> Marca:{' '}
+                    {userData.motoMarca || 'No definida'}
+                  </Text>
+                  <Text style={styles.cardText}>
+                    <Feather name="layers" size={16} /> Modelo:{' '}
+                    {userData.motoModelo || 'No definido'}
+                  </Text>
+                  <Text style={styles.cardText}>
+                    <Feather name="cpu" size={16} /> Cilindrada:{' '}
+                    {userData.cilindradaCC
+                      ? `${userData.cilindradaCC} cc`
+                      : 'No definida'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Tarjeta: Estadísticas */}
@@ -382,11 +593,10 @@ export default function PerfilScreen() {
               </Text>
             </View>
 
-            {/* Botones de editar perfil y cerrar sesión alineados */}
-            <View style={styles.editLogoutRow}>
-              <TouchableOpacity onPress={() => setEditing(true)} style={styles.editProfileButton}>
-                <Text style={styles.editProfileText}>Editar perfil</Text>
-              </TouchableOpacity>
+            {/* Botones de cerrar sesión centrados */}
+            <View
+              style={{ alignItems: 'center', marginTop: 24, width: '100%' }}
+            >
               <TouchableOpacity
                 onPress={async () => {
                   try {
@@ -395,10 +605,19 @@ export default function PerfilScreen() {
                     Alert.alert('Error', 'No se pudo cerrar sesión');
                   }
                 }}
-                style={styles.logoutButton}
+                style={[
+                  styles.buttonInsideCard,
+                  styles.cancelButtonInside,
+                  { width: '70%' },
+                ]}
               >
-                <Feather name="log-out" size={20} color="#e53935" style={{ marginRight: 5 }} />
-                <Text style={styles.logoutText}>Cerrar sesión</Text>
+                <Feather
+                  name="log-out"
+                  size={20}
+                  color="#fff"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.cancelText}>Cerrar sesión</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -409,15 +628,15 @@ export default function PerfilScreen() {
           <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={() => null}>
-                <KeyboardAvoidingView
-                  style={styles.modalContainer}
-                  behavior="padding"
-                >
+                <View style={styles.modalContainer}>
                   <Text style={styles.modalTitle}>Selecciona un avatar</Text>
-
                   <ScrollView
                     horizontal
-                    contentContainerStyle={styles.avatarList}
+                    contentContainerStyle={[
+                      styles.avatarList,
+                      { paddingBottom: 24 },
+                    ]}
+                    showsHorizontalScrollIndicator={false}
                   >
                     {avataresDisponibles.map((url, index) => (
                       <TouchableOpacity
@@ -500,10 +719,17 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity onPress={() => setModalVisible(false)}>
-                    <Text style={styles.closeButton}>Cancelar</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.buttonInsideCard,
+                      styles.cancelButtonInside,
+                      { marginTop: 18, width: '100%' },
+                    ]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.cancelText}>Cancelar</Text>
                   </TouchableOpacity>
-                </KeyboardAvoidingView>
+                </View>
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
@@ -564,6 +790,8 @@ const styles = StyleSheet.create({
   saveText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 15, // Ajusta el tamaño aquí
+    letterSpacing: 0.5,
   },
   cancelButton: {
     backgroundColor: '#aaa',
@@ -574,6 +802,8 @@ const styles = StyleSheet.create({
   cancelText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 15, // Ajusta el tamaño aquí
+    letterSpacing: 0.5,
   },
   picker: {
     width: '100%',
@@ -635,10 +865,12 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 24,
     borderRadius: 12,
-    width: '90%',
+    width: '92%',
     alignItems: 'center',
+    justifyContent: 'flex-start', // Importante: no uses 'center'
+    minHeight: 320, // Aumenta si es necesario
   },
   modalTitle: {
     fontSize: 16,
@@ -724,5 +956,25 @@ const styles = StyleSheet.create({
   logoutText: {
     color: '#e53935',
     fontWeight: 'bold',
+  },
+  editButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginHorizontal: 4,
+    gap: 10, // Si tu versión lo soporta, si no, usa marginRight en el botón izquierdo
+  },
+  buttonInsideCard: {
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  saveButtonInside: {
+    backgroundColor: '#4caf50',
+    marginRight: 6,
+  },
+  cancelButtonInside: {
+    backgroundColor: '#aaa',
   },
 });
