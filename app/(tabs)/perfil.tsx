@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
@@ -13,6 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   useColorScheme,
 } from 'react-native';
@@ -20,40 +22,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 const avataresDisponibles = [
-  'https://cdn-icons-png.flaticon.com/512/2086/2086034.png',
-  'https://cdn-icons-png.flaticon.com/512/2972/2972495.png',
   'https://cdn-icons-png.flaticon.com/512/3177/3177440.png',
-  'https://cdn-icons-png.flaticon.com/512/5864/5864191.png',
-  'https://cdn-icons-png.flaticon.com/512/7920/7920871.png',
-  'https://cdn-icons-png.flaticon.com/512/6776/6776252.png',
-  'https://cdn-icons-png.flaticon.com/512/8144/8144216.png',
-  'https://cdn-icons-png.flaticon.com/512/7922/7922817.png',
-  'https://cdn-icons-png.flaticon.com/512/9812/9812914.png',
+  'https://i.imgur.com/XFEjKr3.jpeg',
+  'https://hondacenter.cl/wp-content/uploads/2019/03/1-28.png',
+  'https://i.imgur.com/NrKS3ez.jpeg',
+  'https://i.imgur.com/cb5BIbR.jpeg',
+  'https://i.imgur.com/8A8xdF4.jpeg',
+  'https://admin.imoto.crmpyme.com//files/bms_producto/40556/img_02.jpg',
+  'https://soymotero.net/wp-content/uploads/2022/11/street_triple_rs_my23_carnival_red_anglerhs.png',
+  'https://www.bikeexif.com/wp-content/uploads/2010/08/harley-davidson-sportster-a.jpg',
 ];
 
 export default function PerfilScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
+  // Estados de usuario y edición
   const [userData, setUserData] = useState<any>(null);
   const [editing, setEditing] = useState(false);
-  const [totalPublicaciones, setTotalPublicaciones] = useState(0);
-  const [totalRutasCreadas, setTotalRutasCreadas] = useState(0);
 
+  // Estados de campos editables
   const [nameInput, setNameInput] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-
   const [cilindradaCC, setCilindradaCC] = useState<number | null>(null);
   const [motoMarca, setMotoMarca] = useState('');
   const [motoModelo, setMotoModelo] = useState('');
   const [bio, setBio] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
 
-  // Cargar datos del usuario en tiempo real
-  const currentUid = auth().currentUser?.uid;
+  // Estadísticas
+  const [totalPublicaciones, setTotalPublicaciones] = useState(0);
+  const [totalRutasCreadas, setTotalRutasCreadas] = useState(0);
+
+  // Avatar modal y URL externa
+  const [modalVisible, setModalVisible] = useState(false);
+  const [customAvatarUrl, setCustomAvatarUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Cargar datos del usuario y estadísticas
   useEffect(() => {
-    const uid = currentUid;
+    const uid = auth().currentUser?.uid;
     if (!uid) return;
 
     // Suscripción en tiempo real a los datos del usuario
@@ -61,7 +70,7 @@ export default function PerfilScreen() {
       .collection('usuarios')
       .doc(uid)
       .onSnapshot(doc => {
-        if (doc.exists()) {
+        if (doc.exists) {
           const data = doc.data() || {};
           setUserData(data);
           setNameInput(data.nombreVisible || '');
@@ -90,7 +99,7 @@ export default function PerfilScreen() {
       .catch(err => console.log('Error al cargar rutas:', err));
 
     return () => unsubscribe();
-  }, [currentUid]);
+  }, [auth().currentUser?.uid]);
 
   // Guardar cambios en el perfil
   const handleSaveProfile = async () => {
@@ -140,6 +149,11 @@ export default function PerfilScreen() {
     if (selectedDate) setBirthDate(selectedDate);
   };
 
+  // Validar URL de imagen
+  const validarURL = (url: string): boolean => {
+    return /^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(url);
+  };
+
   if (!userData) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -164,6 +178,7 @@ export default function PerfilScreen() {
       ]}
     >
       <ScrollView contentContainerStyle={styles.container}>
+        {/* Avatar */}
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Image
             source={{
@@ -175,6 +190,7 @@ export default function PerfilScreen() {
           />
         </TouchableOpacity>
 
+        {/* Edición */}
         {editing ? (
           <>
             <TextInput
@@ -270,10 +286,12 @@ export default function PerfilScreen() {
               {userData.nombreVisible}
             </Text>
 
-            {/* Tarjeta: Biografía */}
-            <View
+            {/* Tarjeta: Biografía editable */}
+            <TouchableOpacity
+              onPress={() => setEditing(true)}
+              activeOpacity={0.9}
               style={[
-                styles.statsCard,
+                styles.bioCard,
                 { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
               ]}
             >
@@ -283,7 +301,7 @@ export default function PerfilScreen() {
               <Text style={styles.cardText}>
                 {bio?.trim() ? bio : 'Aún no tienes una biografía.'}
               </Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Tarjetas: Datos personales y Motocicleta */}
             <View style={styles.row}>
@@ -364,80 +382,133 @@ export default function PerfilScreen() {
               </Text>
             </View>
 
-            {/* Botón para editar */}
-            <TouchableOpacity onPress={() => setEditing(true)}>
-              <Text style={{ color: '#1e90ff', marginTop: 10 }}>
-                Editar perfil
-              </Text>
-            </TouchableOpacity>
+            {/* Botones de editar perfil y cerrar sesión alineados */}
+            <View style={styles.editLogoutRow}>
+              <TouchableOpacity onPress={() => setEditing(true)} style={styles.editProfileButton}>
+                <Text style={styles.editProfileText}>Editar perfil</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    await auth().signOut();
+                  } catch (e) {
+                    Alert.alert('Error', 'No se pudo cerrar sesión');
+                  }
+                }}
+                style={styles.logoutButton}
+              >
+                <Feather name="log-out" size={20} color="#e53935" style={{ marginRight: 5 }} />
+                <Text style={styles.logoutText}>Cerrar sesión</Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
 
-        {/* Botón de logout */}
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9',
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center' }}
-            onPress={async () => {
-              try {
-                await auth().signOut();
-              } catch (e) {
-                Alert.alert('Error', 'No se pudo cerrar sesión');
-              }
-            }}
-          >
-            <Feather
-              name="log-out"
-              size={20}
-              color="#e53935"
-              style={{ marginRight: 8 }}
-            />
-            <Text
-              style={{ color: '#e53935', fontWeight: 'bold', fontSize: 16 }}
-            >
-              Cerrar sesión
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* Modal para seleccionar avatar */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Selecciona un avatar</Text>
-            <ScrollView horizontal contentContainerStyle={styles.avatarList}>
-              {avataresDisponibles.map((url, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={async () => {
-                    const uid = auth().currentUser?.uid;
-                    await firestore()
-                      .collection('usuarios')
-                      .doc(uid)
-                      .update({ fotoPerfilURL: url });
-                    setModalVisible(false);
-                  }}
+        {/* Modal de selección de avatar con URL externa */}
+        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => null}>
+                <KeyboardAvoidingView
+                  style={styles.modalContainer}
+                  behavior="padding"
                 >
-                  <Image source={{ uri: url }} style={styles.avatarOption} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButton}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+                  <Text style={styles.modalTitle}>Selecciona un avatar</Text>
+
+                  <ScrollView
+                    horizontal
+                    contentContainerStyle={styles.avatarList}
+                  >
+                    {avataresDisponibles.map((url, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={async () => {
+                          await firestore()
+                            .collection('usuarios')
+                            .doc(uid)
+                            .update({ fotoPerfilURL: url });
+                          setModalVisible(false);
+                        }}
+                      >
+                        <Image
+                          source={{ uri: url }}
+                          style={styles.avatarOption}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  {/* Tarjeta para ingresar URL externa */}
+                  <View style={styles.urlCard}>
+                    <Text style={styles.cardTitle}>
+                      Usar URL externa (Imgur/Postimages)
+                    </Text>
+                    <TextInput
+                      placeholder="https://i.imgur.com/ejemplo.png"
+                      value={customAvatarUrl}
+                      onChangeText={text => {
+                        setCustomAvatarUrl(text);
+                        setUrlError('');
+                        setShowPreview(validarURL(text));
+                      }}
+                      style={styles.input}
+                      autoCapitalize="none"
+                    />
+                    {urlError ? (
+                      <Text style={{ color: 'red' }}>{urlError}</Text>
+                    ) : null}
+
+                    {showPreview && (
+                      <Image
+                        source={{ uri: customAvatarUrl }}
+                        style={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: 40,
+                          alignSelf: 'center',
+                          marginVertical: 8,
+                        }}
+                      />
+                    )}
+
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={async () => {
+                        if (!validarURL(customAvatarUrl)) {
+                          setUrlError(
+                            'URL inválida. Debe terminar en .jpg, .jpeg, .png o .gif'
+                          );
+                          return;
+                        }
+
+                        try {
+                          await firestore()
+                            .collection('usuarios')
+                            .doc(uid)
+                            .update({
+                              fotoPerfilURL: customAvatarUrl,
+                            });
+                          setModalVisible(false);
+                          setCustomAvatarUrl('');
+                          setShowPreview(false);
+                        } catch (e) {
+                          setUrlError('Error al guardar avatar.');
+                        }
+                      }}
+                    >
+                      <Text style={styles.saveText}>Usar esta URL</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Text style={styles.closeButton}>Cancelar</Text>
+                  </TouchableOpacity>
+                </KeyboardAvoidingView>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -518,11 +589,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 10,
+    gap: 10, // Si tu versión lo soporta
   },
   card: {
     flex: 1,
     borderRadius: 12,
     padding: 16,
+    marginHorizontal: 4, // Si no usas gap
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -541,7 +614,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 10,
+    marginTop: 5, // antes estaba en 10 o más
   },
   cardTitle: {
     fontSize: 16,
@@ -586,6 +659,70 @@ const styles = StyleSheet.create({
   closeButton: {
     color: '#e53935',
     marginTop: 10,
+    fontWeight: 'bold',
+  },
+  urlCard: {
+    backgroundColor: '#f4f4f4',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 15,
+    width: '100%',
+  },
+  bioCard: {
+    width: '100%',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: '#f9f9f9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  editLogoutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+    marginTop: 15,
+  },
+  editProfileButton: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#1e90ff',
+    alignSelf: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  editProfileText: {
+    color: '#1e90ff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#e53935',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  logoutText: {
+    color: '#e53935',
     fontWeight: 'bold',
   },
 });
