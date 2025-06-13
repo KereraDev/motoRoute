@@ -188,39 +188,48 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-  try {
-    const credenciales = await auth().createUserWithEmailAndPassword(email, password);
-    const uid = credenciales.user.uid;
-
-    const uidInterno = `uid-${uid.slice(0, 6)}`;
-
     try {
-      await firestore().collection('usuarios').doc(uid).set({
-        uidInterno,
-        nombreVisible: name.trim(),
-        correo: email.trim(),
-        ciudad: city,
-        rol: ['usuario'],
-        biografia: '',
-        fotoPerfilURL: 'fotoPerfil',
-        fechaNacimiento: birthDate,
-        fechaCreacion: firestore.FieldValue.serverTimestamp(),
-        amigos: [],
-        rutasCompletadas: [],
-      });
-    } catch (firestoreError) {
-      console.error('Error al guardar en Firestore:', firestoreError);
-      Alert.alert('Error', 'No se pudo guardar el usuario en la base de datos.');
-      return;
-    }
+      const credenciales = await auth().createUserWithEmailAndPassword(
+        email,
+        password
+      );
+      const uid = credenciales.user.uid;
 
-    router.replace('/(tabs)/main');
-  } catch (error) {
-    showError(error);
-  } finally {
-    setLoading(false);
-  }
-};
+      const uidInterno = `uid-${uid.slice(0, 6)}`;
+
+      try {
+        await firestore()
+          .collection('usuarios')
+          .doc(uid)
+          .set({
+            uidInterno,
+            nombreVisible: name.trim(),
+            correo: email.trim(),
+            ciudad: city,
+            rol: ['usuario'],
+            biografia: '',
+            fotoPerfilURL: 'fotoPerfil',
+            fechaNacimiento: birthDate,
+            fechaCreacion: firestore.FieldValue.serverTimestamp(),
+            amigos: [],
+            rutasCompletadas: [],
+          });
+      } catch (firestoreError) {
+        console.error('Error al guardar en Firestore:', firestoreError);
+        Alert.alert(
+          'Error',
+          'No se pudo guardar el usuario en la base de datos.'
+        );
+        return;
+      }
+
+      router.replace('/(tabs)/main');
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
