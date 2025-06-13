@@ -85,7 +85,7 @@ export default function LoginScreen() {
           break;
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
-          mensaje = 'La contraseña es incorrecta.';
+          mensaje = 'La contraseña/Correo es incorrecta.';
           break;
         case 'auth/email-already-in-use':
           mensaje = 'Este correo ya está registrado.';
