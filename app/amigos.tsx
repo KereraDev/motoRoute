@@ -1,5 +1,8 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -99,7 +102,27 @@ export default function AmigosScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
-  const router = useRouter(); // ✅ Importante
+  const router = useRouter();
+
+  // --- NUEVO: Solicitudes pendientes ---
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+  const miUid = auth().currentUser?.uid;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!miUid) return;
+      const sub = firestore()
+        .collection('amigos')
+        .where('usuarioB', '==', miUid)
+        .where('estado', '==', 'pendiente')
+        .onSnapshot(snapshot => {
+          setSolicitudesPendientes(snapshot.size);
+        });
+
+      return () => sub();
+    }, [miUid])
+  );
+  // --- FIN NUEVO ---
 
   const filteredChats = dummyChats.filter(chat =>
     chat.user.name.toLowerCase().includes(search.toLowerCase())
@@ -124,9 +147,9 @@ export default function AmigosScreen() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
           paddingHorizontal: 16,
-          marginTop: 16,
+          marginTop: 18,
+          marginBottom: 10,
         }}
       >
         <TextInput
@@ -154,6 +177,38 @@ export default function AmigosScreen() {
           }}
         >
           <Feather name="user-plus" size={20} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push('/amigos/solicitudes')}
+          style={{
+            marginLeft: 10,
+            backgroundColor: '#1e90ff',
+            padding: 10,
+            borderRadius: 8,
+            position: 'relative',
+          }}
+        >
+          <Ionicons name="mail" size={20} color="#fff" />
+          {solicitudesPendientes > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                backgroundColor: 'red',
+                borderRadius: 8,
+                minWidth: 16,
+                height: 16,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
+                {solicitudesPendientes}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 

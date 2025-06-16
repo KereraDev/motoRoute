@@ -2,7 +2,7 @@ import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,6 +32,15 @@ type Amistad = {
 };
 
 export default function BuscarAmigosScreen() {
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <PantallaContenido />
+    </>
+  );
+}
+
+function PantallaContenido() {
   const { user } = useUserStore();
   const [searchText, setSearchText] = useState('');
   const [resultados, setResultados] = useState<Usuario[]>([]);
@@ -42,7 +51,6 @@ export default function BuscarAmigosScreen() {
 
   const miUid = auth().currentUser?.uid;
 
-  // Cargar amistades del usuario una sola vez
   useEffect(() => {
     if (!miUid) return;
     const sub = firestore()
@@ -56,7 +64,6 @@ export default function BuscarAmigosScreen() {
     return () => sub();
   }, [miUid]);
 
-  // Buscar usuarios por nombre (insensible a mayúsculas)
   useEffect(() => {
     if (searchText.trim().length < 3) {
       setResultados([]);
@@ -79,7 +86,6 @@ export default function BuscarAmigosScreen() {
     return () => sub();
   }, [searchText, miUid]);
 
-  // Determina el estado de amistad con un usuario (optimizado con useCallback)
   const getEstadoAmistad = useCallback(
     (amigoUid: string) => {
       const amistad = amistades.find(a => a.usuarios.includes(amigoUid));
@@ -89,11 +95,9 @@ export default function BuscarAmigosScreen() {
     [amistades]
   );
 
-  // Evita duplicados incluso si hay problemas de red
   const enviarInvitacion = async (amigoUid: string) => {
     setEnviando(amigoUid);
     try {
-      // Check en Firestore para evitar duplicados por error de red
       const existente = await firestore()
         .collection('amigos')
         .where('usuarios', 'in', [
@@ -176,13 +180,8 @@ export default function BuscarAmigosScreen() {
     <View
       style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
     >
-      {/* Header con botón volver */}
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: 12,
-        }}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}
       >
         <TouchableOpacity
           onPress={() => router.back()}
@@ -190,23 +189,13 @@ export default function BuscarAmigosScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#1e90ff" />
         </TouchableOpacity>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: '#1e90ff',
-          }}
-        >
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e90ff' }}>
           Buscar amigos
         </Text>
       </View>
-      {/* Barra de búsqueda */}
+
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: 16,
-        }}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}
       >
         <TextInput
           placeholder="Buscar amigo..."
@@ -231,6 +220,7 @@ export default function BuscarAmigosScreen() {
           style={{ marginLeft: 10 }}
         />
       </View>
+
       {loading && <ActivityIndicator style={{ marginTop: 20 }} />}
       <FlatList
         data={resultados}
@@ -239,13 +229,7 @@ export default function BuscarAmigosScreen() {
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={
           searchText.length >= 3 && !loading ? (
-            <Text
-              style={{
-                textAlign: 'center',
-                marginTop: 30,
-                color: '#888',
-              }}
-            >
+            <Text style={{ textAlign: 'center', marginTop: 30, color: '#888' }}>
               No se encontraron usuarios.
             </Text>
           ) : null
