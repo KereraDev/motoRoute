@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  useColorScheme
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -392,7 +392,6 @@ export default function PerfilScreen() {
                         if (selectedDate) setBirthDate(selectedDate);
                       }}
                       maximumDate={new Date()}
-                      locale={Localization.locale}
                     />
                   )}
                   <View style={{ marginTop: 10 }}>

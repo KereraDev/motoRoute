@@ -1,19 +1,19 @@
-import { useLocalSearchParams, useNavigation, router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  useColorScheme,
-} from 'react-native';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
 
 export default function AmigoChatScreen() {
   const { id, name, avatar } = useLocalSearchParams();

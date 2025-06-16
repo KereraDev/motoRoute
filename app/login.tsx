@@ -204,11 +204,13 @@ export default function LoginScreen() {
           .set({
             uidInterno,
             nombreVisible: name.trim(),
+            nombreVisibleLower: name.trim().toLowerCase(),
             correo: email.trim(),
             ciudad: city,
             rol: ['usuario'],
             biografia: '',
-            fotoPerfilURL: 'fotoPerfil',
+            fotoPerfilURL:
+              'https://cdn-icons-png.flaticon.com/512/3177/3177440.png',
             fechaNacimiento: birthDate,
             fechaCreacion: firestore.FieldValue.serverTimestamp(),
             amigos: [],
