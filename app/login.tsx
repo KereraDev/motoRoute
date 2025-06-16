@@ -88,7 +88,7 @@ export default function LoginScreen() {
           break;
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
-          mensaje = 'La contraseña es incorrecta.';
+          mensaje = 'La contraseña/Correo es incorrecta.';
           break;
         case 'auth/email-already-in-use':
           mensaje = 'Este correo ya está registrado.';
@@ -172,42 +172,34 @@ export default function LoginScreen() {
         password
       );
       const uid = credenciales.user.uid;
-      let uidInterno = 'uid001';
+
+      const uidInterno = `uid-${uid.slice(0, 6)}`;
+
       try {
-        const contadorRef = firestore()
-          .collection('contadores')
-          .doc('usuarios');
-        await firestore().runTransaction(async transaction => {
-          const snapshot = await transaction.get(contadorRef);
-          let numero = 1;
-          if (snapshot.exists()) {
-            numero = (snapshot.data()?.contador ?? 0) + 1;
-          }
-          uidInterno = `uid${String(numero).padStart(3, '0')}`;
-
-          // Actualizar contador
-          transaction.set(contadorRef, { contador: numero });
-
-          // Guardar usuario con uidInterno generado y avatar
-          transaction.set(firestore().collection('usuarios').doc(uid), {
+        await firestore()
+          .collection('usuarios')
+          .doc(uid)
+          .set({
             uidInterno,
             nombreVisible: name.trim(),
+            nombreVisibleLower: name.trim().toLowerCase(),
             correo: email.trim(),
             ciudad: city,
             rol: ['usuario'],
             biografia: '',
-            fotoPerfilURL: 'fotoPerfil',
+            fotoPerfilURL:
+              'https://cdn-icons-png.flaticon.com/512/3177/3177440.png',
             fechaNacimiento: birthDate,
             fechaCreacion: firestore.FieldValue.serverTimestamp(),
             amigos: [],
             rutasCompletadas: [],
-            avatar:
-              'https://www.autoocupacio.org/wp-content/uploads/2017/07/Usuario-Vacio.png',
           });
-        });
       } catch (firestoreError) {
         console.error('Error al guardar en Firestore:', firestoreError);
-        Alert.alert('Error', 'Error al guardar los datos del usuario.');
+        Alert.alert(
+          'Error',
+          'No se pudo guardar el usuario en la base de datos.'
+        );
         return;
       }
 

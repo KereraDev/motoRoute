@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
+  Image,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  Image,
-  TouchableOpacity,
-  ScrollView,
   TextInput,
+  TouchableOpacity,
   useColorScheme,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useTabIndexStore } from '@/store/tabIndexStore';
+import Feather from 'react-native-vector-icons/Feather';
 
 const dummyChats = [
   {
@@ -99,7 +102,27 @@ export default function AmigosScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
-  const router = useRouter(); // ✅ Importante
+  const router = useRouter();
+
+  // --- NUEVO: Solicitudes pendientes ---
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+  const miUid = auth().currentUser?.uid;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!miUid) return;
+      const sub = firestore()
+        .collection('amigos')
+        .where('usuarioB', '==', miUid)
+        .where('estado', '==', 'pendiente')
+        .onSnapshot(snapshot => {
+          setSolicitudesPendientes(snapshot.size);
+        });
+
+      return () => sub();
+    }, [miUid])
+  );
+  // --- FIN NUEVO ---
 
   const filteredChats = dummyChats.filter(chat =>
     chat.user.name.toLowerCase().includes(search.toLowerCase())
@@ -120,19 +143,74 @@ export default function AmigosScreen() {
     <View
       style={[styles.wrapper, { backgroundColor: isDark ? '#000' : '#fff' }]}
     >
-      <TextInput
-        placeholder="Buscar amigo..."
-        placeholderTextColor={isDark ? '#888' : '#aaa'}
-        value={search}
-        onChangeText={setSearch}
-        style={[
-          styles.searchInput,
-          {
-            backgroundColor: isDark ? '#1a1a1a' : '#f2f2f2',
-            color: isDark ? '#fff' : '#000',
-          },
-        ]}
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          marginTop: 18,
+          marginBottom: 10,
+        }}
+      >
+        <TextInput
+          placeholder="Buscar amigo..."
+          placeholderTextColor={isDark ? '#888' : '#aaa'}
+          value={search}
+          onChangeText={setSearch}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: isDark ? '#1a1a1a' : '#f2f2f2',
+              color: isDark ? '#fff' : '#000',
+              flex: 1,
+              marginRight: 0,
+            },
+          ]}
+        />
+        <TouchableOpacity
+          onPress={() => router.push('/amigos/buscarAmigos')}
+          style={{
+            marginLeft: 10,
+            backgroundColor: '#1e90ff',
+            padding: 10,
+            borderRadius: 8,
+          }}
+        >
+          <Feather name="user-plus" size={20} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push('/amigos/solicitudes')}
+          style={{
+            marginLeft: 10,
+            backgroundColor: '#1e90ff',
+            padding: 10,
+            borderRadius: 8,
+            position: 'relative',
+          }}
+        >
+          <Ionicons name="mail" size={20} color="#fff" />
+          {solicitudesPendientes > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                backgroundColor: 'red',
+                borderRadius: 8,
+                minWidth: 16,
+                height: 16,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
+                {solicitudesPendientes}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         style={styles.chatList}
