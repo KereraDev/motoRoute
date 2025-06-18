@@ -1,27 +1,27 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
   Keyboard,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
   useColorScheme,
-  Platform,
+  View,
 } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 import { useCameraStore } from '@/store/cameraStore';
-import firestore from '@react-native-firebase/firestore';
 import { useUserStore } from '@/store/userStore';
 import { uploadImageToFirebase } from '@/utils/firebaseStorage';
+import firestore from '@react-native-firebase/firestore';
 
 interface LocationCoords {
   latitude: number;
@@ -136,7 +136,6 @@ export default function CrearRuta() {
         likesCount: 0,
         commentsCount: 0,
       };
-      console.log('Guardando en Firestore:', dataToSave);
 
       await firestore().collection('rutas').add(dataToSave);
 
@@ -230,6 +229,7 @@ export default function CrearRuta() {
         <View style={styles.mapContainer}>
           {Platform.OS !== 'web' ? (
             <MapView
+              provider={PROVIDER_GOOGLE}
               style={styles.map}
               region={{
                 latitude: rutaRecorrida.at(-1)?.latitude ?? -33.4489,
@@ -281,12 +281,8 @@ export default function CrearRuta() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
+  container: { flex: 1 },
+  content: { padding: 16 },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
