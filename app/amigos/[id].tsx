@@ -1,7 +1,9 @@
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -15,6 +17,17 @@ import {
   View,
 } from 'react-native';
 
+// Tipado para los mensajes del chat
+type ChatMessage = {
+  id: string;
+  sender: 'me' | 'them';
+  text: string;
+};
+
+// Utilidad para generar un chatId único y compartido
+const generarChatId = (uid1: string, uid2: string) =>
+  [uid1, uid2].sort().join('_');
+
 export default function AmigoChatScreen() {
   const { id, name, avatar } = useLocalSearchParams();
   const { user } = useUserStore();
@@ -22,79 +35,75 @@ export default function AmigoChatScreen() {
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation();
 
-  useEffect(() => {
-    navigation.setOptions({ headerShown: false });
-  }, []);
-
-  type ChatMessage = {
-    id: string;
-    sender: 'me' | 'them';
-    text: string;
-  };
-
-  const dummyChatsById: Record<string, ChatMessage[]> = {
-    '1': [
-      {
-        id: '1',
-        sender: 'them',
-        text: 'Oe wn, ¿mañana subimos el cerro o qué?',
-      },
-      { id: '2', sender: 'me', text: '¡Obvio que sí, bro! 🚴‍♂️' },
-    ],
-    '2': [
-      { id: '1', sender: 'them', text: 'Jajaja esa ruta quedó joya, bro 🔥' },
-      { id: '2', sender: 'me', text: 'Nos lucimos en esa toma 😎' },
-    ],
-    '3': [
-      { id: '1', sender: 'them', text: 'Te pasaste con la fotoooo 😍' },
-      {
-        id: '2',
-        sender: 'me',
-        text: 'Gracias! Me inspiré en el atardecer jeje',
-      },
-    ],
-    '4': [
-      { id: '1', sender: 'them', text: 'Ya po, ¿nos vamos o no? 😂' },
-      { id: '2', sender: 'me', text: '¡En una hora paso por ti!' },
-    ],
-    '5': [
-      { id: '1', sender: 'them', text: 'Manda ubicación po compa' },
-      { id: '2', sender: 'me', text: 'Recién la compartí por WhatsApp' },
-    ],
-    '6': [
-      { id: '1', sender: 'them', text: 'No me quedé dormido, lo juro jaja' },
-      { id: '2', sender: 'me', text: 'Te estábamos esperando jajaja' },
-    ],
-    '7': [
-      { id: '1', sender: 'them', text: 'Traes la GoPro?' },
-      { id: '2', sender: 'me', text: 'Obvio, batería al 100%' },
-    ],
-    '8': [
-      {
-        id: '1',
-        sender: 'them',
-        text: 'Me perdí pero encontré un mirador brutal',
-      },
-      { id: '2', sender: 'me', text: '¡Sube foto, hermanooo! 🔥' },
-    ],
-  };
-
-  const [messages, setMessages] = useState(dummyChatsById[id as string] || []);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
 
-  const sendMessage = () => {
+  const miUid = auth().currentUser?.uid ?? '';
+  const amigoUid = id as string;
+  const chatId = generarChatId(miUid, amigoUid);
+
+  // Oculta el header nativo
+  useEffect(() => {
+    navigation.setOptions?.({ headerShown: false });
+  }, [navigation]);
+
+  // Suscripción en tiempo real a los mensajes del chat
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection('chats')
+      .doc(chatId)
+      .collection('mensajes')
+      .orderBy('timestamp', 'asc')
+      .onSnapshot(snapshot => {
+        const mensajesFirebase: ChatMessage[] = snapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            if (!data.timestamp) return null;
+            return {
+              id: doc.id,
+              sender: data.de === miUid ? 'me' : 'them',
+              text: data.texto,
+            };
+          })
+          .filter(Boolean) as ChatMessage[];
+        setMessages(mensajesFirebase);
+      });
+
+    return () => unsubscribe();
+  }, [chatId, miUid]);
+
+  // Envía un mensaje y actualiza el resumen del chat
+  const sendMessage = useCallback(async () => {
     if (inputText.trim() === '') return;
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'me',
-      text: inputText,
+    const mensaje = {
+      texto: inputText.trim(),
+      de: miUid,
+      timestamp: firestore.FieldValue.serverTimestamp(),
     };
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
-  };
+    await firestore()
+      .collection('chats')
+      .doc(chatId)
+      .collection('mensajes')
+      .add(mensaje);
 
+    await firestore()
+      .collection('chats')
+      .doc(chatId)
+      .set(
+        {
+          participantes: [miUid, amigoUid],
+          ultimoMensaje: mensaje.texto,
+          timestampUltimo: mensaje.timestamp,
+        },
+        { merge: true }
+      );
+
+    setInputText('');
+  }, [inputText, miUid, amigoUid, chatId]);
+
+  // Renderiza cada mensaje
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isMe = item.sender === 'me';
     return (
@@ -122,8 +131,12 @@ export default function AmigoChatScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? '#000' : '#fff' },
+      ]}
     >
+      {/* Header */}
       <View
         style={[
           styles.header,
@@ -133,10 +146,7 @@ export default function AmigoChatScreen() {
           },
         ]}
       >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons
             name="arrow-back"
             size={24}
@@ -149,6 +159,7 @@ export default function AmigoChatScreen() {
         </Text>
       </View>
 
+      {/* Mensajes */}
       <FlatList
         data={messages}
         renderItem={renderMessage}
@@ -156,6 +167,7 @@ export default function AmigoChatScreen() {
         contentContainerStyle={styles.chatArea}
       />
 
+      {/* Input */}
       <View
         style={[
           styles.inputContainer,
@@ -175,6 +187,8 @@ export default function AmigoChatScreen() {
           placeholderTextColor={isDark ? '#777' : '#aaa'}
           value={inputText}
           onChangeText={setInputText}
+          onSubmitEditing={sendMessage}
+          returnKeyType="send"
         />
         <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
           <Text style={{ color: 'white' }}>Enviar</Text>
