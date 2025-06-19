@@ -15,94 +15,69 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
-const dummyChats = [
-  {
-    id: '1',
-    user: {
-      name: 'rider_maipo',
-      avatar: 'https://randomuser.me/api/portraits/men/31.jpg',
-    },
-    lastMessage: 'Oe wn, ¿mañana subimos el cerro o qué?',
-    time: '10:45',
-    unread: true,
-  },
-  {
-    id: '2',
-    user: {
-      name: 'valentina_trips',
-      avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-    },
-    lastMessage: 'Jajaja esa ruta quedó joya, bro 🔥',
-    time: '09:18',
-    unread: false,
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Lucas | @explorer_chile',
-      avatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-    },
-    lastMessage: 'Te pasaste con la fotoooo 😍',
-    time: '08:30',
-    unread: true,
-  },
-  {
-    id: '4',
-    user: {
-      name: 'renata.motera',
-      avatar: 'https://randomuser.me/api/portraits/women/80.jpg',
-    },
-    lastMessage: 'Ya po, ¿nos vamos o no? 😂',
-    time: '07:41',
-    unread: true,
-  },
-  {
-    id: '5',
-    user: {
-      name: 'el_fabi.rides',
-      avatar: 'https://randomuser.me/api/portraits/men/36.jpg',
-    },
-    lastMessage: 'Manda ubicación po compa',
-    time: 'Ayer',
-    unread: false,
-  },
-  {
-    id: '6',
-    user: {
-      name: 'javi_trip',
-      avatar: 'https://randomuser.me/api/portraits/men/33.jpg',
-    },
-    lastMessage: 'No me quedé dormido, lo juro jaja',
-    time: 'Dom',
-    unread: true,
-  },
-  {
-    id: '7',
-    user: {
-      name: 'camila_ride',
-      avatar: 'https://randomuser.me/api/portraits/women/50.jpg',
-    },
-    lastMessage: 'Traes la GoPro?',
-    time: 'Dom',
-    unread: false,
-  },
-  {
-    id: '8',
-    user: {
-      name: 'ale.nómada',
-      avatar: 'https://randomuser.me/api/portraits/men/22.jpg',
-    },
-    lastMessage: 'Me perdí pero encontré un mirador brutal',
-    time: 'Sab',
-    unread: false,
-  },
-];
+const cargarAmigosAceptados = async (miUid: string, setAmigosAceptados: Function) => {
+  if (!miUid) return;
+
+  const amigos: any[] = [];
+
+  const snapshot = await firestore()
+    .collection('amigos')
+    .where('estado', '==', 'aceptado')
+    .where('usuarios', 'array-contains', miUid)
+    .get();
+
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    const amigoUid = data.usuarioA === miUid ? data.usuarioB : data.usuarioA;
+    await agregarInfoDelAmigo(amigos, miUid, amigoUid);
+  }
+  amigos.sort((a, b) => b.time.localeCompare(a.time));
+  setAmigosAceptados(amigos);
+}  ;
+
+
+
+const agregarInfoDelAmigo = async (lista: any[], miUid: string, amigoUid: string) => {
+  const usuarioDoc = await firestore().collection('usuarios').doc(amigoUid).get();
+  const userData = usuarioDoc.data();
+
+  let lastMessage = '¡Empieza una conversación!';
+  let time = '';
+  let unread = false;
+
+  const chatId = [miUid, amigoUid].sort().join('_');
+  const chatDoc = await firestore().collection('chats').doc(chatId).get();
+  const chatData = chatDoc.data();
+  if (chatData) {
+    if (chatData.ultimoMensaje) lastMessage = chatData.ultimoMensaje;
+    if (chatData.timestampUltimo?.toDate) {
+      const date = chatData.timestampUltimo.toDate();
+      time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  if (userData) {
+    lista.push({
+      id: amigoUid,
+      user: {
+        name: userData.nombreVisible || 'Usuario',
+        avatar: userData.fotoPerfilURL || 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png',
+      },
+      lastMessage,
+      time,
+      unread,
+    });
+  }
+};
+
+
 
 export default function AmigosScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
   const router = useRouter();
+  const [amigosAceptados, setAmigosAceptados] = useState<any[]>([]);
 
   // --- NUEVO: Solicitudes pendientes ---
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
@@ -117,6 +92,9 @@ export default function AmigosScreen() {
         .where('estado', '==', 'pendiente')
         .onSnapshot(snapshot => {
           setSolicitudesPendientes(snapshot.size);
+          cargarAmigosAceptados(miUid, setAmigosAceptados);
+
+
         });
 
       return () => sub();
@@ -124,11 +102,12 @@ export default function AmigosScreen() {
   );
   // --- FIN NUEVO ---
 
-  const filteredChats = dummyChats.filter(chat =>
-    chat.user.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredChats = amigosAceptados.filter(chat =>
+  chat.user.name.toLowerCase().includes(search.toLowerCase())
+);
 
-  const handleChatPress = (chat: (typeof dummyChats)[0]) => {
+ const handleChatPress = (chat: any) => {
+
     router.push({
       pathname: '/amigos/[id]',
       params: {
