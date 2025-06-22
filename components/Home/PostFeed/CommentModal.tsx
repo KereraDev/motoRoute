@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import firestore from '@react-native-firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
   FlatList,
-  TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
   useColorScheme,
+  View,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import { Ionicons } from '@expo/vector-icons';
-import firestore from '@react-native-firebase/firestore';
 import { useUserStore } from '../../../store/userStore';
 
 type Comment = {
@@ -21,7 +20,7 @@ type Comment = {
   text: string;
   user: {
     username: string;
-    avatar: string;
+    fotoPerfilURL?: string;
   };
   createdAt: any;
 };
@@ -45,7 +44,6 @@ export default function CommentModal({
   const [loading, setLoading] = useState(true);
   const user = useUserStore(state => state.user);
 
-  // 1. Leer comentarios en tiempo real
   useEffect(() => {
     if (!postId) return;
     const unsubscribe = firestore()
@@ -64,33 +62,53 @@ export default function CommentModal({
     return unsubscribe;
   }, [postId]);
 
-  // 2. Enviar comentario y actualizar contador
   const handleSend = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user || !user.uid || !user.nombreVisible) {
+      alert('No se puede enviar el comentario. Usuario inválido o comentario vacío.');
+      return;
+    }
 
     const rutaRef = firestore().collection('rutas').doc(postId);
     const comentariosRef = rutaRef.collection('comentarios');
 
-    await firestore().runTransaction(async transaction => {
-      const rutaDoc = await transaction.get(rutaRef);
+    try {
+      await firestore().runTransaction(async transaction => {
+        const rutaDoc = await transaction.get(rutaRef);
 
-      transaction.set(comentariosRef.doc(), {
-        text: newComment.trim(),
-        user: {
-          username: user.nombreVisible,
-          avatar: user.avatar,
-        },
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        transaction.set(comentariosRef.doc(), {
+          text: newComment.trim(),
+          user: {
+            username: user.nombreVisible,
+            fotoPerfilURL: user.fotoPerfilURL ?? '',
+          },
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+
+        const currentCount = rutaDoc.data()?.commentsCount ?? 0;
+        transaction.update(rutaRef, {
+          commentsCount: currentCount + 1,
+        });
       });
 
-      const currentCount = rutaDoc.data()?.commentsCount ?? 0;
-      transaction.update(rutaRef, {
-        commentsCount: currentCount + 1,
-      });
-    });
-
-    setNewComment('');
+      setNewComment('');
+    } catch (error) {
+      console.error('❌ Error al enviar comentario:', error);
+      alert('No se pudo enviar el comentario. Inténtalo nuevamente.');
+    }
   };
+
+  const renderEmptyComponent = () =>
+    !loading ? (
+      <Text
+        style={{
+          color: isDark ? '#aaa' : '#888',
+          textAlign: 'center',
+          marginTop: 20,
+        }}
+      >
+        ¡Sé el primero en comentar!
+      </Text>
+    ) : null;
 
   return (
     <Modal
@@ -121,21 +139,23 @@ export default function CommentModal({
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={styles.commentItem}>
-              <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
+              <Image
+                source={{
+                  uri:
+                    item.user.fotoPerfilURL?.length > 0
+                      ? item.user.fotoPerfilURL
+                      : 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                }}
+                style={styles.avatar}
+              />
               <View style={styles.commentContent}>
                 <Text
-                  style={[
-                    styles.username,
-                    { color: isDark ? '#ccc' : '#696969' },
-                  ]}
+                  style={[styles.username, { color: isDark ? '#ccc' : '#000' }]}
                 >
                   {item.user.username}
                 </Text>
                 <Text
-                  style={[
-                    styles.commentText,
-                    { color: isDark ? '#eee' : '#A9A9A9' },
-                  ]}
+                  style={[styles.commentText, { color: isDark ? '#eee' : '#000' }]}
                 >
                   {item.text}
                 </Text>
@@ -143,19 +163,7 @@ export default function CommentModal({
             </View>
           )}
           style={styles.commentsList}
-          ListEmptyComponent={
-            !loading && (
-              <Text
-                style={{
-                  color: isDark ? '#aaa' : '#888',
-                  textAlign: 'center',
-                  marginTop: 20,
-                }}
-              >
-                ¡Sé el primero en comentar!
-              </Text>
-            )
-          }
+          ListEmptyComponent={renderEmptyComponent}
         />
 
         <KeyboardAvoidingView
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 4,
-    backgroundColor: '#A9A9A9',
+    backgroundColor: '#000',
     marginBottom: 8,
   },
   title: {
@@ -262,7 +270,7 @@ const styles = StyleSheet.create({
   sendButton: {
     justifyContent: 'center',
     paddingHorizontal: 12,
-    backgroundColor: '#008000',
+    backgroundColor: '#1f618d',
     borderRadius: 20,
   },
   sendText: {

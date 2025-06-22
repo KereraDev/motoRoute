@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Image,
-  StyleSheet,
-  Pressable,
-  Platform,
-  FlatList,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../../constants/Colors';
 import ThemedText from '@/components/ui/ThemedText';
-import CommentModal from './CommentModal';
+import { Ionicons } from '@expo/vector-icons';
+import firestore from '@react-native-firebase/firestore';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Colors } from '../../../constants/Colors';
 import { useColorScheme } from '../../../hooks/useColorScheme';
 import { useUserStore } from '../../../store/userStore';
-import firestore from '@react-native-firebase/firestore';
-
+import CommentModal from './CommentModal';
 let MapView: any = null;
 let Marker: any = null;
 let Polyline: any = null;
@@ -35,6 +35,8 @@ type Post = {
   image?: string;
   likesCount: number;
   likedBy: string[];
+  fotoPerfilURL?: string;
+  creadorUid?: string; 
 };
 
 type PostFeedProps = {
@@ -78,6 +80,7 @@ function LikeButton({ onToggle, count, liked, disabled }: LikeButtonProps) {
 }
 
 export default function PostFeed({ posts }: PostFeedProps) {
+  const router = useRouter();
   const [commentsCount, setCommentsCount] = useState<{
     [postId: string]: number;
   }>({});
@@ -241,8 +244,10 @@ export default function PostFeed({ posts }: PostFeedProps) {
         ]}
       >
         <View style={styles.postHeader}>
-          {post.avatar ? (
-            <Image source={{ uri: post.avatar }} style={styles.avatar} />
+          {post.fotoPerfilURL ? (
+            <Pressable onPress={() => router.push(`/perfil/${post.creadorUid}`)}>
+              <Image source={{ uri: post.fotoPerfilURL }} style={styles.avatar} />
+            </Pressable>
           ) : (
             <Ionicons
               name="person-circle-outline"
@@ -251,9 +256,11 @@ export default function PostFeed({ posts }: PostFeedProps) {
               style={styles.avatar}
             />
           )}
-          <ThemedText style={[styles.postUsername, { color: textColor }]}>
-            {post.username}
-          </ThemedText>
+          <Pressable onPress={() => router.push(`/perfil/${post.creadorUid}`)}>
+            <ThemedText style={[styles.postUsername, { color: textColor }]}>
+              {post.username}
+            </ThemedText>
+          </Pressable>
         </View>
 
         {/* Imagen/marcador/mapa */}
@@ -330,9 +337,11 @@ export default function PostFeed({ posts }: PostFeedProps) {
         </View>
 
         <View style={styles.postCaption}>
-          <ThemedText style={[styles.postUsername, { color: textColor }]}>
-            {post.username}
-          </ThemedText>
+          <Pressable onPress={() => router.push(`/perfil/${post.creadorUid}`)}>
+            <ThemedText style={[styles.postUsername, { color: textColor }]}>
+              {post.username}
+            </ThemedText>
+          </Pressable>
           <ThemedText style={[styles.postTitle, { color: textColor }]}>
             {post.title}
           </ThemedText>

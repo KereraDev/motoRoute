@@ -4,6 +4,7 @@ export type User = {
   nombreVisible: string;
   avatar: string;
   uid: string;
+  fotoPerfilURL?: string;
 };
 
 type UserStore = {

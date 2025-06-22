@@ -22,6 +22,7 @@ export type Post = {
   liked?: boolean;
   comments?: Comment[];
   route?: LocationCoords[];
+  fotoPerfilURL?: string;
 };
 
 export type NewPostInput = {

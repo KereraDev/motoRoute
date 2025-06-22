@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
   Keyboard,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -10,18 +14,14 @@ import {
   TouchableWithoutFeedback,
   View,
   useColorScheme,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCameraStore } from '@/store/cameraStore';
-import firestore from '@react-native-firebase/firestore';
 import { useUserStore } from '@/store/userStore';
 import { uploadImageToFirebase } from '@/utils/firebaseStorage';
+import firestore from '@react-native-firebase/firestore';
 
 interface LocationCoords {
   latitude: number;
@@ -216,7 +216,7 @@ export default function CrearRuta() {
           />
 
           <TouchableOpacity
-            style={[styles.locationButton, { backgroundColor: '#008000' }]}
+            style={[styles.locationButton, { backgroundColor: '#1f618d' }]}
             onPress={
               seguimientoActivo ? detenerSeguimiento : comenzarSeguimiento
             }
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   publish: {
-    backgroundColor: '#008000',
+    backgroundColor: '#1f618d',
   },
   buttonText: {
     color: '#fff',

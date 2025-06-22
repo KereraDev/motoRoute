@@ -28,11 +28,135 @@ type ChatMessage = {
 const generarChatId = (uid1: string, uid2: string) =>
   [uid1, uid2].sort().join('_');
 
+const theme = {
+  light: {
+    containerBg: '#ffffff',
+    headerBg: '#f9f9f9',
+    headerBorder: '#cccccc',
+    backIcon: '#000000',
+    nameText: '#000000',
+    messageBgMe: '#1f618d',
+    messageBgThem: '#e0e0e0',
+    messageTextMe: '#ffffff',
+    messageTextThem: '#000000',
+    chatAreaBg: '#ffffff',
+    inputContainerBg: '#f9f9f9',
+    inputBg: '#ffffff',
+    inputBorder: '#dddddd',
+    placeholder: '#aaaaaa',
+    sendButtonBg: '#1f618d',
+    sendButtonText: '#ffffff',
+  },
+  dark: {
+    containerBg: '#000000',
+    headerBg: '#111111',
+    headerBorder: '#222222',
+    backIcon: '#ffffff',
+    nameText: '#ffffff',
+    messageBgMe: '#1f618d',
+    messageBgThem: '#333333',
+    messageTextMe: '#ffffff',
+    messageTextThem: '#ffffff',
+    chatAreaBg: '#000000',
+    inputContainerBg: '#111111',
+    inputBg: '#000000',
+    inputBorder: '#444444',
+    placeholder: '#777777',
+    sendButtonBg: '#1f618d',
+    sendButtonText: '#ffffff',
+  },
+};
+
+type ThemeColors = typeof theme.light;
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.containerBg,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      backgroundColor: colors.headerBg,
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors.headerBorder,
+    },
+    backButton: {
+      marginRight: 10,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 10,
+    },
+    name: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.nameText,
+    },
+    chatArea: {
+      flexGrow: 1,
+      padding: 16,
+      backgroundColor: colors.chatAreaBg,
+    },
+    messageContainer: {
+      padding: 10,
+      borderRadius: 10,
+      marginVertical: 4,
+      maxWidth: '70%',
+    },
+    messageLeft: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.messageBgThem,
+    },
+    messageRight: {
+      alignSelf: 'flex-end',
+      backgroundColor: colors.messageBgMe,
+    },
+    messageText: {
+      fontSize: 15,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      padding: 8,
+      backgroundColor: colors.inputContainerBg,
+      borderTopWidth: 0.5,
+      borderTopColor: colors.headerBorder,
+      alignItems: 'center',
+    },
+    input: {
+      flex: 1,
+      backgroundColor: colors.inputBg,
+      borderRadius: 20,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      color: colors.nameText,
+      marginRight: 8,
+    },
+    sendButton: {
+      backgroundColor: colors.sendButtonBg,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 20,
+    },
+    sendButtonText: {
+      color: colors.sendButtonText,
+      fontWeight: 'bold',
+    },
+  });
+
 export default function AmigoChatScreen() {
   const { id, name, avatar } = useLocalSearchParams();
   const { user } = useUserStore();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+  const colors = theme[scheme];
+  const styles = createStyles(colors);
   const navigation = useNavigation();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -55,7 +179,7 @@ export default function AmigoChatScreen() {
       .collection('mensajes')
       .orderBy('timestamp', 'asc')
       .onSnapshot(snapshot => {
-        const mensajesFirebase: ChatMessage[] = snapshot.docs
+        const msgs = snapshot.docs
           .map(doc => {
             const data = doc.data();
             if (!data.timestamp) return null;
@@ -66,9 +190,8 @@ export default function AmigoChatScreen() {
             };
           })
           .filter(Boolean) as ChatMessage[];
-        setMessages(mensajesFirebase);
+        setMessages(msgs);
       });
-
     return () => unsubscribe();
   }, [chatId, miUid]);
 
@@ -111,15 +234,12 @@ export default function AmigoChatScreen() {
         style={[
           styles.messageContainer,
           isMe ? styles.messageRight : styles.messageLeft,
-          {
-            backgroundColor: isMe ? '#008000' : isDark ? '#333' : '#e0e0e0',
-          },
         ]}
       >
         <Text
           style={[
             styles.messageText,
-            { color: isMe ? '#fff' : isDark ? '#fff' : '#000' },
+            { color: isMe ? colors.messageTextMe : colors.messageTextThem },
           ]}
         >
           {item.text}
@@ -131,32 +251,15 @@ export default function AmigoChatScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[
-        styles.container,
-        { backgroundColor: isDark ? '#000' : '#fff' },
-      ]}
+      style={styles.container}
     >
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: isDark ? '#111' : '#f9f9f9',
-            borderBottomColor: isDark ? '#222' : '#ccc',
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={isDark ? '#fff' : '#000'}
-          />
+          <Ionicons name="arrow-back" size={24} color={colors.backIcon} />
         </TouchableOpacity>
         <Image source={{ uri: avatar as string }} style={styles.avatar} />
-        <Text style={[styles.name, { color: isDark ? '#fff' : '#000' }]}>
-          {name}
-        </Text>
+        <Text style={styles.name}>{name}</Text>
       </View>
 
       {/* Mensajes */}
@@ -168,92 +271,20 @@ export default function AmigoChatScreen() {
       />
 
       {/* Input */}
-      <View
-        style={[
-          styles.inputContainer,
-          { backgroundColor: isDark ? '#111' : '#f9f9f9' },
-        ]}
-      >
+      <View style={styles.inputContainer}>
         <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? '#000' : '#fff',
-              color: isDark ? '#fff' : '#000',
-              borderColor: isDark ? '#444' : '#ddd',
-            },
-          ]}
+          style={styles.input}
           placeholder="Escribe un mensaje..."
-          placeholderTextColor={isDark ? '#777' : '#aaa'}
+          placeholderTextColor={colors.placeholder}
           value={inputText}
           onChangeText={setInputText}
           onSubmitEditing={sendMessage}
           returnKeyType="send"
         />
         <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-          <Text style={{ color: 'white' }}>Enviar</Text>
+          <Text style={styles.sendButtonText}>Enviar</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 0.5,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  chatArea: {
-    padding: 16,
-  },
-  messageContainer: {
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 4,
-    maxWidth: '70%',
-  },
-  messageLeft: {
-    alignSelf: 'flex-start',
-  },
-  messageRight: {
-    alignSelf: 'flex-end',
-  },
-  messageText: {
-    fontSize: 15,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 8,
-    borderTopWidth: 0.5,
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-  },
-  sendButton: {
-    backgroundColor: '#008000',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
-});

@@ -29,7 +29,7 @@ export default function Header() {
           { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
         ]}
       >
-        BIenvenido {user?.nombreVisible ?? ''}
+        Bienvenido {user?.nombreVisible ?? ''}
       </ThemedText>
 
       <Pressable

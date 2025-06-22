@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import firestore from '@react-native-firebase/firestore';
+import { useEffect, useState } from 'react';
 
 export function useRutasFeed() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -15,6 +15,8 @@ export function useRutasFeed() {
             const data = doc.data();
             let username = 'Usuario';
             let avatar = '';
+            let fotoPerfilURL = '';
+
             try {
               const userDoc = await firestore()
                 .collection('usuarios')
@@ -24,12 +26,15 @@ export function useRutasFeed() {
                 const userData = userDoc.data();
                 username = userData?.nombreVisible ?? 'Usuario';
                 avatar = userData?.avatar ?? '';
+                fotoPerfilURL = userData?.fotoPerfilURL ?? '';
               }
             } catch {}
+
             return {
               id: doc.id,
               username: data.nombreVisible ?? username,
               avatar,
+              fotoPerfilURL, // <- 🔥 Aquí se añade
               title: data.titulo,
               caption: data.descripcion,
               route: data.coordenadas,
@@ -37,6 +42,7 @@ export function useRutasFeed() {
               commentsCount: data.commentsCount ?? 0,
               likesCount: data.likesCount ?? 0,
               likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+              creadorUid: data.creadorUid,
             };
           })
         );

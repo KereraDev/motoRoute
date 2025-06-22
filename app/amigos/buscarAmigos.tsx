@@ -1,3 +1,5 @@
+// app/amigos/buscarAmigos.tsx
+
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
@@ -79,7 +81,7 @@ function PantallaContenido() {
       .onSnapshot(snapshot => {
         const data = snapshot.docs
           .map(doc => ({ uid: doc.id, ...doc.data() }) as Usuario)
-          .filter(user => user.uid !== miUid);
+          .filter(u => u.uid !== miUid);
         setResultados(data);
         setLoading(false);
       });
@@ -180,9 +182,8 @@ function PantallaContenido() {
     <View
       style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
     >
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}
-      >
+      {/* Cabecera con botón atrás y título */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={{ marginRight: 10 }}
@@ -194,34 +195,27 @@ function PantallaContenido() {
         </Text>
       </View>
 
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}
-      >
+      {/* Input de búsqueda */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
         <TextInput
           placeholder="Buscar amigo..."
-          placeholderTextColor="#888"
+          placeholderTextColor={isDark ? '#aaa' : '#888'}
           value={searchText}
           onChangeText={setSearchText}
-          style={{
-            flex: 1,
-            backgroundColor: '#f2f2f2',
-            color: '#000',
-            borderRadius: 20,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            fontSize: 16,
-          }}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: isDark ? '#222' : '#f9f9f9',
+              color: isDark ? '#fff' : '#333',
+              borderColor: isDark ? '#555' : '#ccc',
+            },
+          ]}
           autoCapitalize="none"
-        />
-        <Ionicons
-          name="search"
-          size={20}
-          color="#888"
-          style={{ marginLeft: 10 }}
         />
       </View>
 
       {loading && <ActivityIndicator style={{ marginTop: 20 }} />}
+
       <FlatList
         data={resultados}
         keyExtractor={item => item.uid}
@@ -286,5 +280,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#555',
     fontWeight: 'bold',
+  },
+  searchInput: {
+    flex: 1,
+    borderRadius: 18,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: 8,
+    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f9f9f9',
+    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
 });

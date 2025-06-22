@@ -1,5 +1,8 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthState } from '@/onAuthStateChanged';
+import type { User } from '@/store/userStore';
+import { useUserStore } from '@/store/userStore';
+import firestore from '@react-native-firebase/firestore';
 import {
   DarkTheme,
   DefaultTheme,
@@ -13,15 +16,12 @@ import { ActivityIndicator, StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import firestore from '@react-native-firebase/firestore';
-import { useUserStore } from '@/store/userStore';
-import type { User } from '@/store/userStore';
 console.log('App _layout.tsx renderizado');
 
 SplashScreen.preventAutoHideAsync();
 
 const AVATAR_DEFAULT =
-  'https://www.autoocupacio.org/wp-content/uploads/2017/07/Usuario-Vacio.png';
+  'https://cdn-icons-png.flaticon.com/512/3177/3177440.png';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -65,7 +65,7 @@ export default function RootLayout() {
             setUser({
               ...data,
               uid: doc.id,
-              avatar: data.avatar || AVATAR_DEFAULT,
+              fotoPerfilURL: data.fotoPerfilURL || AVATAR_DEFAULT,
             });
           } else {
             setUser(null);
@@ -109,8 +109,9 @@ export default function RootLayout() {
             >
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="amigos" options={{ headerShown: false }} />
+              <Stack.Screen name="friends" options={{ headerShown: false }} />
               <Stack.Screen name="camera" options={{ headerShown: false }} />
+              <Stack.Screen name="perfil/[uid]" options={{ headerShown: false }} />
             </Stack>
           </SafeAreaView>
         </ThemeProvider>

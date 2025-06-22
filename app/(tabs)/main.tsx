@@ -1,10 +1,10 @@
 // app/main.tsx
-import React, { useState } from 'react';
-import { useWindowDimensions, View, StyleSheet } from 'react-native';
-import { TabView, SceneMap } from 'react-native-tab-view';
-import HomeScreen from './home';
-import AmigosScreen from '../amigos';
 import { useTabIndexStore } from '@/store/tabIndexStore';
+import React, { useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { TabView } from 'react-native-tab-view';
+import AmigosScreen from '../friends';
+import HomeScreen from './home';
 export default function MainSwipeTabs() {
   const layout = useWindowDimensions();
   const index = useTabIndexStore(state => state.index);
@@ -12,14 +12,14 @@ export default function MainSwipeTabs() {
 
   const [routes] = useState([
     { key: 'home', title: 'Home' },
-    { key: 'amigos', title: 'Amigos' },
+    { key: 'friends', title: 'friends' },
   ]);
 
   const renderScene = ({ route }: { route: { key: string } }) => {
     switch (route.key) {
       case 'home':
         return <HomeScreen />;
-      case 'amigos':
+      case 'friends':
         return <AmigosScreen />;
       default:
         return null;
