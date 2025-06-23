@@ -53,7 +53,7 @@ const theme = {
   },
 };
 
-const createStyles = (colors) =>
+const createStyles = colors =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -259,6 +259,7 @@ export default function PerfilScreen() {
 
   // Estados de campos editables
   const [nameInput, setNameInput] = useState('');
+  const [ciudad, setCiudad] = useState('');
   const [birthDate, setBirthDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [cilindradaCC, setCilindradaCC] = useState(null);
@@ -285,11 +286,12 @@ export default function PerfilScreen() {
     const unsubscribe = firestore()
       .collection('usuarios')
       .doc(uid)
-      .onSnapshot((doc) => {
+      .onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data() || {};
           setUserData(data);
           setNameInput(data.nombreVisible || '');
+          setCiudad(data.ciudad || '');
           setBirthDate(data.fechaNacimiento?.toDate?.() || null);
           setCilindradaCC(data.cilindradaCC || null);
           setMotoMarca(data.motoMarca || '');
@@ -299,49 +301,48 @@ export default function PerfilScreen() {
       });
 
     firestore()
-  .collection('rutas')
-  .where('creadorUid', '==', uid)
-  .get()
-  .then((snapshot) => {
-    const publicaciones = snapshot.docs.filter(doc => {
-      const data = doc.data();
-      return !!data.descripcion || !!data.fotoUrl; // Aquí defines qué es una publicación
-    });
-    setTotalPublicaciones(publicaciones.length);
-  })
-  .catch((err) => console.log('Error al contar publicaciones desde rutas:', err));
+      .collection('rutas')
+      .where('creadorUid', '==', uid)
+      .get()
+      .then(snapshot => {
+        const publicaciones = snapshot.docs.filter(doc => {
+          const data = doc.data();
+          return !!data.descripcion || !!data.fotoUrl; // Aquí defines qué es una publicación
+        });
+        setTotalPublicaciones(publicaciones.length);
+      })
+      .catch(err =>
+        console.log('Error al contar publicaciones desde rutas:', err)
+      );
 
+    // Consulta amistades aceptadas
+    firestore()
+      .collection('amigos')
+      .where('usuarios', 'array-contains', uid)
+      .where('estado', '==', 'aceptado')
+      .get()
+      .then(snapshot => {
+        setCantidadAmigos(snapshot.size);
+      })
+      .catch(err => console.log('Error al cargar amigos:', err));
 
-      // Consulta amistades aceptadas
-firestore()
-  .collection('amigos')
-  .where('usuarios', 'array-contains', uid)
-  .where('estado', '==', 'aceptado')
-  .get()
-  .then(snapshot => {
-    setCantidadAmigos(snapshot.size);
-  })
-  .catch(err => console.log('Error al cargar amigos:', err));
-
-
-firestore()
-  .collection('rutas')
-  .where('creadorUid', '==', uid)
-  .get()
-  .then((snapshot) => {
-    const rutasConCoordenadas = snapshot.docs.filter((doc) => {
-      const data = doc.data();
-      return Array.isArray(data.coordenadas) && data.coordenadas.length > 0;
-    });
-    setTotalRutasCreadas(rutasConCoordenadas.length);
-  })
-  .catch((err) => console.log('Error al cargar rutas:', err));
-
+    firestore()
+      .collection('rutas')
+      .where('creadorUid', '==', uid)
+      .get()
+      .then(snapshot => {
+        const rutasConCoordenadas = snapshot.docs.filter(doc => {
+          const data = doc.data();
+          return Array.isArray(data.coordenadas) && data.coordenadas.length > 0;
+        });
+        setTotalRutasCreadas(rutasConCoordenadas.length);
+      })
+      .catch(err => console.log('Error al cargar rutas:', err));
 
     return () => unsubscribe();
   }, [currentUid]);
 
-  const validarURL = (url) => /^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(url);
+  const validarURL = url => /^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(url);
 
   const handleSaveProfile = async () => {
     const uid = auth().currentUser?.uid;
@@ -365,6 +366,7 @@ firestore()
         motoMarca: motoMarca.trim(),
         motoModelo: motoModelo.trim(),
         biografia: bio.trim(),
+        ciudad: ciudad.trim(),
       });
       setEditing(false);
       Alert.alert('Éxito', 'Datos del perfil actualizados');
@@ -411,7 +413,9 @@ firestore()
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Image
             source={{
-              uri: userData.fotoPerfilURL || 'https://ui-avatars.com/api/?name=Usuario',
+              uri:
+                userData.fotoPerfilURL ||
+                'https://ui-avatars.com/api/?name=Usuario',
             }}
             style={styles.avatar}
           />
@@ -428,12 +432,21 @@ firestore()
               autoCapitalize="words"
             />
 
-            <TouchableOpacity onPress={() => setEditDatos(true)} activeOpacity={0.9}>
+            <TouchableOpacity
+              onPress={() => setEditDatos(true)}
+              activeOpacity={0.9}
+            >
               <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-                <Feather name="user-check" size={16} /> Nombre: {userData.nombreVisible}
+                <Feather name="user-check" size={16} /> Nombre:{' '}
+                {userData.nombreVisible}
+              </Text>
+              <Text style={styles.cardText}>
+                <Feather name="map-pin" size={16} /> Ciudad:{' '}
+                {userData.ciudad || 'No definida'}
               </Text>
               <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-                <Feather name="calendar" size={16} /> Fecha de nacimiento: {fechaFormateada}
+                <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
+                {fechaFormateada}
               </Text>
             </TouchableOpacity>
 
@@ -450,7 +463,7 @@ firestore()
             <Text style={styles.label}>Cilindrada (cc):</Text>
             <Picker
               selectedValue={cilindradaCC}
-              onValueChange={(itemValue) => setCilindradaCC(itemValue)}
+              onValueChange={itemValue => setCilindradaCC(itemValue)}
               style={styles.picker}
             >
               <Picker.Item
@@ -458,8 +471,13 @@ firestore()
                 value={null}
                 color={colors.textPrimary}
               />
-              {[125, 150, 200, 250, 400, 500, 650, 750, 1000].map((cc) => (
-                <Picker.Item key={cc} label={`${cc} cc`} value={cc} color={colors.textPrimary} />
+              {[125, 150, 200, 250, 400, 500, 650, 750, 1000].map(cc => (
+                <Picker.Item
+                  key={cc}
+                  label={`${cc} cc`}
+                  value={cc}
+                  color={colors.textPrimary}
+                />
               ))}
             </Picker>
 
@@ -493,10 +511,16 @@ firestore()
             />
 
             <View style={styles.editButtons}>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveProfile}
+              >
                 <Text style={styles.saveText}>Guardar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancel}
+              >
                 <Text style={styles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
@@ -506,14 +530,22 @@ firestore()
             <Text style={styles.username}>{userData.nombreVisible}</Text>
 
             {editBio ? (
-              <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+              <View
+                style={[
+                  styles.card,
+                  { backgroundColor: colors.cardBackground },
+                ]}
+              >
                 <Text style={styles.cardTitle}>
                   <Feather name="message-circle" size={18} /> Biografía
                 </Text>
                 <TextInput
                   value={bio}
                   onChangeText={setBio}
-                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                  style={[
+                    styles.input,
+                    { height: 80, textAlignVertical: 'top' },
+                  ]}
                   placeholder="Escribe algo sobre ti..."
                   placeholderTextColor={colors.placeholder}
                   multiline
@@ -546,7 +578,10 @@ firestore()
               <TouchableOpacity
                 onPress={() => setEditBio(true)}
                 activeOpacity={0.9}
-                style={[styles.card, { backgroundColor: colors.cardBackground }]}
+                style={[
+                  styles.card,
+                  { backgroundColor: colors.cardBackground },
+                ]}
               >
                 <Text style={styles.cardTitle}>
                   <Feather name="message-circle" size={18} /> Biografía
@@ -568,6 +603,14 @@ firestore()
                     onChangeText={setNameInput}
                     style={styles.input}
                     placeholder="Nombre visible"
+                    placeholderTextColor={colors.placeholder}
+                    autoCapitalize="words"
+                  />
+                  <TextInput
+                    value={ciudad}
+                    onChangeText={setCiudad}
+                    style={styles.input}
+                    placeholder="Ciudad"
                     placeholderTextColor={colors.placeholder}
                     autoCapitalize="words"
                   />
@@ -625,10 +668,17 @@ firestore()
                     <Feather name="user" size={18} /> Datos personales
                   </Text>
                   <Text style={styles.cardText}>
-                    <Feather name="user-check" size={16} /> Nombre: {userData.nombreVisible}
+                    <Feather name="user-check" size={16} /> Nombre:{' '}
+                    {userData.nombreVisible}
                   </Text>
                   <Text style={styles.cardText}>
-                    <Feather name="calendar" size={16} /> Fecha de nacimiento: {fechaFormateada}
+                    <Feather name="map-pin" size={16} /> Ciudad:{' '}
+                    {userData.ciudad || 'No definida'}
+                  </Text>
+
+                  <Text style={styles.cardText}>
+                    <Feather name="calendar" size={16} /> Fecha de nacimiento:{' '}
+                    {fechaFormateada}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -654,11 +704,14 @@ firestore()
                   />
                   <Picker
                     selectedValue={cilindradaCC}
-                    onValueChange={(itemValue) => setCilindradaCC(itemValue)}
+                    onValueChange={itemValue => setCilindradaCC(itemValue)}
                     style={styles.picker}
                   >
-                    <Picker.Item label="Selecciona una cilindrada" value={null} />
-                    {[125, 150, 200, 250, 400, 500, 650, 750, 1000].map((cc) => (
+                    <Picker.Item
+                      label="Selecciona una cilindrada"
+                      value={null}
+                    />
+                    {[125, 150, 200, 250, 400, 500, 650, 750, 1000].map(cc => (
                       <Picker.Item key={cc} label={`${cc} cc`} value={cc} />
                     ))}
                   </Picker>
@@ -711,7 +764,9 @@ firestore()
                   </Text>
                   <Text style={styles.cardText}>
                     <Feather name="cpu" size={16} /> Cilindrada:{' '}
-                    {userData.cilindradaCC ? `${userData.cilindradaCC} cc` : 'No definida'}
+                    {userData.cilindradaCC
+                      ? `${userData.cilindradaCC} cc`
+                      : 'No definida'}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -730,8 +785,8 @@ firestore()
                 {totalRutasCreadas}
               </Text>
               <Text style={styles.cardText}>
-  <Feather name="users" size={16} /> Amigos: {cantidadAmigos}
-</Text>
+                <Feather name="users" size={16} /> Amigos: {cantidadAmigos}
+              </Text>
 
               <Text style={styles.cardText}>
                 <Feather name="edit-2" size={16} /> Publicaciones:{' '}
@@ -739,7 +794,9 @@ firestore()
               </Text>
             </View>
 
-            <View style={{ alignItems: 'center', marginTop: 24, width: '100%' }}>
+            <View
+              style={{ alignItems: 'center', marginTop: 24, width: '100%' }}
+            >
               <TouchableOpacity
                 onPress={async () => {
                   try {
@@ -787,7 +844,10 @@ firestore()
                           setModalVisible(false);
                         }}
                       >
-                        <Image source={{uri: url}} style={styles.avatarOption} />
+                        <Image
+                          source={{ uri: url }}
+                          style={styles.avatarOption}
+                        />
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -800,7 +860,7 @@ firestore()
                       placeholder="https://i.imgur.com/ejemplo.png"
                       placeholderTextColor={colors.placeholder}
                       value={customAvatarUrl}
-                      onChangeText={(text) => {
+                      onChangeText={text => {
                         setCustomAvatarUrl(text);
                         setUrlError('');
                         setShowPreview(validarURL(text));
@@ -808,10 +868,12 @@ firestore()
                       style={styles.input}
                       autoCapitalize="none"
                     />
-                    {urlError ? <Text style={{color: 'red'}}>{urlError}</Text> : null}
+                    {urlError ? (
+                      <Text style={{ color: 'red' }}>{urlError}</Text>
+                    ) : null}
                     {showPreview && (
                       <Image
-                        source={{uri: customAvatarUrl}}
+                        source={{ uri: customAvatarUrl }}
                         style={{
                           width: 80,
                           height: 80,
