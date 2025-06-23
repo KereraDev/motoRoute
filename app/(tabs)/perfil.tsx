@@ -269,6 +269,7 @@ export default function PerfilScreen() {
   // Estadísticas
   const [totalPublicaciones, setTotalPublicaciones] = useState(0);
   const [totalRutasCreadas, setTotalRutasCreadas] = useState(0);
+  const [cantidadAmigos, setCantidadAmigos] = useState(0);
 
   // Avatar modal y URL externa
   const [modalVisible, setModalVisible] = useState(false);
@@ -298,18 +299,44 @@ export default function PerfilScreen() {
       });
 
     firestore()
-      .collection('publicaciones')
-      .where('autorUid', '==', uid)
-      .get()
-      .then((snapshot) => setTotalPublicaciones(snapshot.size))
-      .catch((err) => console.log('Error al cargar publicaciones:', err));
+  .collection('rutas')
+  .where('creadorUid', '==', uid)
+  .get()
+  .then((snapshot) => {
+    const publicaciones = snapshot.docs.filter(doc => {
+      const data = doc.data();
+      return !!data.descripcion || !!data.fotoUrl; // Aquí defines qué es una publicación
+    });
+    setTotalPublicaciones(publicaciones.length);
+  })
+  .catch((err) => console.log('Error al contar publicaciones desde rutas:', err));
 
-    firestore()
-      .collection('rutas')
-      .where('creadorUid', '==', uid)
-      .get()
-      .then((snapshot) => setTotalRutasCreadas(snapshot.size))
-      .catch((err) => console.log('Error al cargar rutas:', err));
+
+      // Consulta amistades aceptadas
+firestore()
+  .collection('amigos')
+  .where('usuarios', 'array-contains', uid)
+  .where('estado', '==', 'aceptado')
+  .get()
+  .then(snapshot => {
+    setCantidadAmigos(snapshot.size);
+  })
+  .catch(err => console.log('Error al cargar amigos:', err));
+
+
+firestore()
+  .collection('rutas')
+  .where('creadorUid', '==', uid)
+  .get()
+  .then((snapshot) => {
+    const rutasConCoordenadas = snapshot.docs.filter((doc) => {
+      const data = doc.data();
+      return Array.isArray(data.coordenadas) && data.coordenadas.length > 0;
+    });
+    setTotalRutasCreadas(rutasConCoordenadas.length);
+  })
+  .catch((err) => console.log('Error al cargar rutas:', err));
+
 
     return () => unsubscribe();
   }, [currentUid]);
@@ -703,9 +730,9 @@ export default function PerfilScreen() {
                 {totalRutasCreadas}
               </Text>
               <Text style={styles.cardText}>
-                <Feather name="users" size={16} /> Amigos:{' '}
-                {userData.amigos?.length || 0}
-              </Text>
+  <Feather name="users" size={16} /> Amigos: {cantidadAmigos}
+</Text>
+
               <Text style={styles.cardText}>
                 <Feather name="edit-2" size={16} /> Publicaciones:{' '}
                 {totalPublicaciones}

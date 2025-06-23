@@ -57,11 +57,21 @@ export default function PerfilPublicoScreen() {
         setLoading(false);
       });
 
-    firestore()
-      .collection('publicaciones')
-      .where('autorUid', '==', uid)
-      .get()
-      .then(snapshot => setTotalPublicaciones(snapshot.size));
+firestore()
+  .collection('rutas')
+  .where('creadorUid', '==', uid)
+  .get()
+  .then(snapshot => {
+    const publicaciones = snapshot.docs.filter(doc => {
+      const data = doc.data();
+      return !!data.descripcion || !!data.fotoUrl; // ← verifica si es una publicación real
+    });
+
+    setTotalPublicaciones(publicaciones.length);
+    setTotalRutasCreadas(snapshot.size);
+  });
+
+
 
     firestore()
       .collection('rutas')
