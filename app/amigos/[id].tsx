@@ -254,13 +254,19 @@ export default function AmigoChatScreen() {
       style={styles.container}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.backIcon} />
-        </TouchableOpacity>
-        <Image source={{ uri: avatar as string }} style={styles.avatar} />
-        <Text style={styles.name}>{name}</Text>
-      </View>
+<View style={styles.header}>
+  <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+    <Ionicons name="arrow-back" size={24} color={colors.backIcon} />
+  </TouchableOpacity>
+
+  {/* Avatar y nombre redirigen al perfil */}
+  <TouchableOpacity onPress={() => router.push(`/perfil/${id}`)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Image source={{ uri: avatar as string }} style={styles.avatar} />
+    <Text style={styles.name}>{name}</Text>
+  </TouchableOpacity>
+</View>
+
+
 
       {/* Mensajes */}
       <FlatList
