@@ -16,8 +16,7 @@ export default function NotificacionesScreen() {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const router = useRouter();
   const uid = auth().currentUser?.uid;
-  console.log('UID actual:', uid);
-  // Auxiliar para evitar repetir la ruta
+
   const getNotiRef = () =>
     firestore().collection('notificaciones').doc(uid).collection('lista');
 
@@ -30,7 +29,6 @@ export default function NotificacionesScreen() {
           id: doc.id,
           ...doc.data(),
         })) as Notificacion[];
-        console.log('Notificaciones traídas:', notis);
         setNotificaciones(notis);
       });
     return () => sub();
@@ -41,73 +39,66 @@ export default function NotificacionesScreen() {
     await getNotiRef().doc(id).update({ leido: true });
   };
 
-  const renderItem = ({ item }: { item: Notificacion }) => (
-    <TouchableOpacity
-      style={[
-        styles.item,
-        { backgroundColor: item.leido ? '#f0f0f0' : '#dff0ff' },
-      ]}
-      onPress={() => {
-        marcarComoLeido(item.id);
-        if (item.tipo === 'invitacion') {
-          router.push('/amigos/solicitudes');
-        }
-      }}
-    >
-      <Ionicons
-        name={
-          item.tipo === 'comentario'
-            ? 'chatbubble-ellipses'
-            : item.tipo === 'meGusta'
-              ? 'thumbs-up'
-              : 'person-add'
-        }
-        size={20}
-        color={item.leido ? '#888' : '#007AFF'}
-        style={{ marginRight: 10 }}
-      />
-      <Text style={styles.text}>
-        {item?.mensaje ?? 'Notificación'} {item.leido ? '✓' : ''}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: Notificacion;
+    index: number;
+  }) => {
+    const esInvitacion = item.tipo === 'invitacion';
+
+    // Verifica si es la PRIMERA invitación en la lista completa
+    const mostrarTituloInvitacion =
+      esInvitacion &&
+      notificaciones.findIndex(n => n.tipo === 'invitacion') === index;
+
+    return (
+      <>
+        {mostrarTituloInvitacion && (
+          <Text style={styles.subtitle}>Solicitudes de amistad</Text>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.item,
+            { backgroundColor: item.leido ? '#f0f0f0' : '#dff0ff' },
+          ]}
+          onPress={() => {
+            marcarComoLeido(item.id);
+            if (esInvitacion) {
+              router.push('/amigos/solicitudes');
+            }
+          }}
+        >
+          <Ionicons
+            name={
+              item.tipo === 'comentario'
+                ? 'chatbubble-ellipses'
+                : item.tipo === 'meGusta'
+                  ? 'thumbs-up'
+                  : 'person-add'
+            }
+            size={20}
+            color={item.leido ? '#888' : '#007AFF'}
+            style={{ marginRight: 10 }}
+          />
+          <Text style={styles.text}>
+            {item.mensaje ?? 'Notificación'} {item.leido ? '✓' : ''}
+          </Text>
+        </TouchableOpacity>
+      </>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notificaciones</Text>
-      {notificaciones.some(n => n.tipo === 'invitacion') && (
-        <>
-          <Text style={styles.subtitle}>Solicitudes de amistad</Text>
-          <FlatList
-            data={notificaciones.filter(n => n.tipo === 'invitacion')}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.item, { backgroundColor: '#e8f5ff' }]}
-                onPress={() => {
-                  marcarComoLeido(item.id);
-                  router.push('/amigos/solicitudes');
-                }}
-              >
-                <Ionicons
-                  name="person-add"
-                  size={20}
-                  color="#007AFF"
-                  style={{ marginRight: 10 }}
-                />
-                <Text style={styles.text}>
-                  {item.mensaje ?? 'Te enviaron una solicitud de amistad'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </>
-      )}
 
       <FlatList
-        data={notificaciones.filter(n => n.tipo !== 'invitacion')}
-        renderItem={renderItem}
+        data={notificaciones}
         keyExtractor={item => item.id}
+        renderItem={renderItem}
         ListEmptyComponent={
           <Text style={styles.text}>Sin notificaciones.</Text>
         }
