@@ -4,11 +4,11 @@ import firestore from '@react-native-firebase/firestore';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Notificacion } from './types';
 
@@ -16,7 +16,7 @@ export default function NotificacionesScreen() {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const router = useRouter();
   const uid = auth().currentUser?.uid;
-
+  console.log('UID actual:', uid);
   // Auxiliar para evitar repetir la ruta
   const getNotiRef = () =>
     firestore().collection('notificaciones').doc(uid).collection('lista');
@@ -30,9 +30,9 @@ export default function NotificacionesScreen() {
           id: doc.id,
           ...doc.data(),
         })) as Notificacion[];
+        console.log('Notificaciones traídas:', notis);
         setNotificaciones(notis);
       });
-
     return () => sub();
   }, [uid]);
 
@@ -75,8 +75,37 @@ export default function NotificacionesScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notificaciones</Text>
+      {notificaciones.some(n => n.tipo === 'invitacion') && (
+        <>
+          <Text style={styles.subtitle}>Solicitudes de amistad</Text>
+          <FlatList
+            data={notificaciones.filter(n => n.tipo === 'invitacion')}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.item, { backgroundColor: '#e8f5ff' }]}
+                onPress={() => {
+                  marcarComoLeido(item.id);
+                  router.push('/amigos/solicitudes');
+                }}
+              >
+                <Ionicons
+                  name="person-add"
+                  size={20}
+                  color="#007AFF"
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.text}>
+                  {item.mensaje ?? 'Te enviaron una solicitud de amistad'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      )}
+
       <FlatList
-        data={notificaciones}
+        data={notificaciones.filter(n => n.tipo !== 'invitacion')}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         ListEmptyComponent={
@@ -100,5 +129,11 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     fontSize: 14,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 8,
   },
 });

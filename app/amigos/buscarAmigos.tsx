@@ -1,9 +1,11 @@
 // app/amigos/buscarAmigos.tsx
 
+import { crearNotificacionInvitacion } from '@/notificaciones/crearNotificaciones';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+
 import { Stack, router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -44,6 +46,7 @@ export default function BuscarAmigosScreen() {
 
 function PantallaContenido() {
   const { user } = useUserStore();
+  console.log('User store en buscarAmigos:', user);
   const [searchText, setSearchText] = useState('');
   const [resultados, setResultados] = useState<Usuario[]>([]);
   const [amistades, setAmistades] = useState<Amistad[]>([]);
@@ -124,6 +127,11 @@ function PantallaContenido() {
           usuarioB: amigoUid,
           usuarios: [miUid, amigoUid],
         });
+      await crearNotificacionInvitacion({
+        destinatarioUid: amigoUid,
+        emisorNombre: user?.nombreVisible?.trim() || 'Un usuario',
+      });
+
       alert('Invitación enviada');
     } catch (e) {
       alert('Error al enviar invitación');
@@ -183,7 +191,9 @@ function PantallaContenido() {
       style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
     >
       {/* Cabecera con botón atrás y título */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}
+      >
         <TouchableOpacity
           onPress={() => router.back()}
           style={{ marginRight: 10 }}
@@ -196,7 +206,9 @@ function PantallaContenido() {
       </View>
 
       {/* Input de búsqueda */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}
+      >
         <TextInput
           placeholder="Buscar amigo..."
           placeholderTextColor={isDark ? '#aaa' : '#888'}
