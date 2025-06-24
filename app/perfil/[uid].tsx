@@ -4,14 +4,14 @@ import firestore from '@react-native-firebase/firestore';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useColorScheme,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
@@ -30,7 +30,7 @@ export default function PerfilPublicoScreen() {
   const [totalRutasCreadas, setTotalRutasCreadas] = useState(0);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     if (!uid || typeof uid !== 'string') {
       console.warn('UID inválido:', uid);

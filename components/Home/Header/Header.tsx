@@ -2,11 +2,12 @@ import ThemedText from '@/components/ui/ThemedText';
 import { useTabIndexStore } from '@/store/tabIndexStore';
 import { useUserStore } from '@/store/userStore';
 import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColorScheme } from '../../../hooks/useColorScheme';
-
 // Importa ambas versiones del logo
 const logoLight = require('../../../assets/images/logo-dark.png'); // para fondo oscuro
 const logoDark = require('../../../assets/images/logo-light.png');
@@ -15,9 +16,11 @@ export default function Header() {
   const colorScheme = useColorScheme();
   const { user } = useUserStore();
   const setIndex = useTabIndexStore(state => state.setIndex);
-
+  const router = useRouter();
   const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0);
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+  const [hayNoLeidas, setHayNoLeidas] = useState(false);
+  const uid = auth().currentUser?.uid;
 
   useEffect(() => {
     const uid = user?.uid;
@@ -31,6 +34,7 @@ export default function Header() {
       .where('leido', '==', false)
       .onSnapshot(snapshot => {
         setNotificacionesNoLeidas(snapshot.size);
+        setHayNoLeidas(!snapshot.empty);
       });
 
     // Solicitudes de amistad pendientes
@@ -50,6 +54,8 @@ export default function Header() {
 
   const totalNotificaciones = notificacionesNoLeidas + solicitudesPendientes;
 
+  if (!user?.uid) return null;
+
   return (
     <View style={styles.header}>
       {/* Logo que cambia según el modo */}
@@ -67,7 +73,7 @@ export default function Header() {
         Bienvenido {user?.nombreVisible ?? ''}
       </ThemedText>
       <Pressable
-        onPress={() => setIndex(4)}
+        onPress={() => router.push('/notificaciones')}
         style={({ hovered, pressed }) => [
           styles.iconButton,
           (hovered || pressed) && styles.iconButtonHover,

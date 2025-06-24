@@ -1,4 +1,5 @@
 import ThemedText from '@/components/ui/ThemedText';
+import { crearNotificacionLike } from '@/notificaciones/crearNotificaciones'; // Ajusta la ruta si es diferente
 import { Ionicons } from '@expo/vector-icons';
 import firestore from '@react-native-firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -36,7 +37,7 @@ type Post = {
   likesCount: number;
   likedBy: string[];
   fotoPerfilURL?: string;
-  creadorUid?: string; 
+  creadorUid?: string;
 };
 
 type PostFeedProps = {
@@ -190,10 +191,20 @@ export default function PostFeed({ posts }: PostFeedProps) {
             likesCount: currentCount + 1,
             likedBy: [...likedBy, user.uid],
           });
+
+          // Crear notificación (fuera del transaction)
+          if (data?.creadorUid && data?.creadorUid !== user.uid) {
+            setTimeout(() => {
+              crearNotificacionLike({
+                destinatarioUid: data.creadorUid,
+                emisorNombre: user.nombreVisible,
+                rutaId: postId,
+              });
+            }, 0);
+          }
         }
       });
     } catch (err) {
-      // Si falla, revierte el cambio optimista
       setLikesState(prev => {
         const current = prev[postId] || { count: 0, liked: false };
         return {
@@ -245,8 +256,13 @@ export default function PostFeed({ posts }: PostFeedProps) {
       >
         <View style={styles.postHeader}>
           {post.fotoPerfilURL ? (
-            <Pressable onPress={() => router.push(`/perfil/${post.creadorUid}`)}>
-              <Image source={{ uri: post.fotoPerfilURL }} style={styles.avatar} />
+            <Pressable
+              onPress={() => router.push(`/perfil/${post.creadorUid}`)}
+            >
+              <Image
+                source={{ uri: post.fotoPerfilURL }}
+                style={styles.avatar}
+              />
             </Pressable>
           ) : (
             <Ionicons

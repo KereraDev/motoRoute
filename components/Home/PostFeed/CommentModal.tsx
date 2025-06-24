@@ -1,3 +1,4 @@
+import { crearNotificacionComentario } from '@/notificaciones/crearNotificaciones';
 import firestore from '@react-native-firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -64,7 +65,9 @@ export default function CommentModal({
 
   const handleSend = async () => {
     if (!newComment.trim() || !user || !user.uid || !user.nombreVisible) {
-      alert('No se puede enviar el comentario. Usuario inválido o comentario vacío.');
+      alert(
+        'No se puede enviar el comentario. Usuario inválido o comentario vacío.'
+      );
       return;
     }
 
@@ -91,6 +94,18 @@ export default function CommentModal({
       });
 
       setNewComment('');
+
+      // Obtener UID del creador de la ruta
+      const rutaDoc = await rutaRef.get();
+      const creadorUid = rutaDoc.data()?.creadorUid;
+
+      if (creadorUid && creadorUid !== user.uid) {
+        await crearNotificacionComentario({
+          destinatarioUid: creadorUid,
+          emisorNombre: user.nombreVisible,
+          rutaId: postId,
+        });
+      }
     } catch (error) {
       console.error('❌ Error al enviar comentario:', error);
       alert('No se pudo enviar el comentario. Inténtalo nuevamente.');
@@ -155,7 +170,10 @@ export default function CommentModal({
                   {item.user.username}
                 </Text>
                 <Text
-                  style={[styles.commentText, { color: isDark ? '#eee' : '#000' }]}
+                  style={[
+                    styles.commentText,
+                    { color: isDark ? '#eee' : '#000' },
+                  ]}
                 >
                   {item.text}
                 </Text>
