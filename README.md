@@ -1,5 +1,3 @@
-from pathlib import Path
-
 # Contenido del README
 readme_content = """
 # 🏍️ MotoRoutes
@@ -24,21 +22,6 @@ readme_content = """
 - **React Navigation**
 - **react-native-maps** y **expo-location**
 
-## 📂 Estructura del proyecto
-
-/app
-/components
-/screens
-/store ← Zustand stores
-/types
-...
-
-## 📌 Notas
-
-- No se requiere autenticación
-- No tiene backend
-- No está desplegada (solo entorno local)
-
 ## 🧑‍💻 Autores
 
 Mario Navarro Allende  
@@ -46,9 +29,3 @@ Mario Navarro Allende
 📧 mario.n.navarro@live.com  
 📍 Santiago, Chile
 """
-
-# Guardar el archivo como README.md
-readme_path = Path("/mnt/data/README_MotoRoutes.md")
-readme_path.write_text(readme_content.strip(), encoding="utf-8")
-
-readme_path.name
