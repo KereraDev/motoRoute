@@ -1,5 +1,3 @@
-# Contenido del README
-readme_content = """
 # 🏍️ MotoRoutes
 
 **MotoRoutes** es una aplicación móvil desarrollada con React Native y Expo, pensada para motociclistas que desean registrar, visualizar y compartir sus rutas de viaje de manera simple e intuitiva.
